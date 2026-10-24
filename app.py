@@ -3,10 +3,9 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 from datetime import datetime
-import os
 
 # ============================================================
-# KONFIGURASI HALAMAN STREAMLIT (MOBILE FRIENDLY)
+# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL MODE)
 # ============================================================
 st.set_page_config(
     page_title="JII70 Syariah Pro Terminal",
@@ -15,13 +14,34 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Styling CSS Glassmorphism Dark Neon + Custom Color Tags
+# Custom Styling CSS Modern Glassmorphism & Neon Financial Theme
 st.markdown("""
     <style>
-    .main { background-color: #07090e; color: #f1f5f9; }
-    .stMetric { background-color: #111827; border: 1px solid #1f2937; padding: 15px; border-radius: 12px; }
-    .green-text { color: #4ade80; font-weight: bold; }
-    .red-text { color: #f87171; font-weight: bold; }
+    .main { 
+        background: linear-gradient(135deg, #05070b 0%, #0f172a 100%); 
+        color: #f1f5f9; 
+    }
+    .stMetric { 
+        background: linear-gradient(145deg, #111827 0%, #1f2937 100%); 
+        border: 1px solid #334155; 
+        padding: 18px; 
+        border-radius: 14px; 
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .stMetric label {
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+    }
+    h1, h2, h3 {
+        font-family: 'Segoe UI', sans-serif;
+        letter-spacing: -0.5px;
+    }
+    .terminal-header {
+        background: rgba(15, 23, 42, 0.8);
+        border-bottom: 1px solid #1e293b;
+        padding: 10px 0;
+        margin-bottom: 20px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -105,17 +125,17 @@ def download_market_data():
             is_rebound = (intraday_drop <= -2.5) and (rebound_low >= 2.0) and (v > vol_sma5 * 1.8) and (c >= vwap)
 
             jenis_recom = "Konsolidasi Normal"
-            alasan = "Pergerakan harga dan volume stabil dalam rentang konsolidasi pasar wajar."
+            alasan = "Pergerakan harga dan volume stabil dalam rentang konsolidasi wajar."
 
             if is_rebound:
                 jenis_recom = "Saham Rebound"
-                alasan = "Shakeout Rebound: Tekanan jual diredam buyer besar dengan lonjakan volume di atas VWAP."
+                alasan = "Shakeout Rebound: Tekanan jual diredam buyer besar dengan lonjakan volume."
             elif c <= support * 1.015 and c >= support * 0.985:
                 jenis_recom = "Saham BOW"
                 alasan = "Buy on Weakness: Harga terkoreksi sehat menguji area Support Pivot kuat."
             elif c > ma20 and ma20 > ma50:
                 jenis_recom = "Saham Swing"
-                alasan = "Swing Trend Following: Struktur tren menengah bullish mapan (MA20 di atas MA50)."
+                alasan = "Swing Trend Following: Struktur tren menengah bullish mapan (MA20 > MA50)."
             elif chg_pct > 3.0 and v > (vol_sma5 * 1.6):
                 jenis_recom = "Saham Scalping"
                 alasan = "Momentum Scalping: Lonjakan harga impulsif disertai volume masif."
@@ -138,95 +158,133 @@ def download_market_data():
 
     return pd.DataFrame(results), {'current': ihsg_current, 'chg': ihsg_chg}
 
-# Header Utama
-st.title("⚡ JII70 SYARIAH PRO TERMINAL")
+# ============================================================
+# HEADER & BRANDING TERMINAL
+# ============================================================
+st.markdown("""
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
+        <h1 style="margin: 0; font-size: 2.2rem; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            ⚡ JII70 SYARIAH PRO TERMINAL
+        </h1>
+        <span style="background: #1e293b; color: #38bdf8; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid #334155; font-weight: 600;">
+            LIVE MARKET FEED
+        </span>
+    </div>
+""", unsafe_allow_html=True)
 
 # Load Data
-with st.spinner("Menghubungkan ke server Yahoo Finance untuk data riil bursa..."):
+with st.spinner("Sinkronisasi real-time dengan server bursa..."):
     df, ihsg_info = download_market_data()
 
-# Widget IHSG & Statistik
-col1, col2, col3, col4, col5 = st.columns(5)
-with col1:
+# ============================================================
+# KARTU METRIK STATISTIK UTAMA
+# ============================================================
+m1, m2, m3, m4, m5 = st.columns(5)
+with m1:
     st.metric("IHSG Market", f"{ihsg_info['current']:,.2f}", f"{ihsg_info['chg']:+.2f}%")
-with col2:
+with m2:
     st.metric("Total Emiten", len(df))
-with col3:
+with m3:
     naik = len(df[df['Chg%'] > 0]) if not df.empty else 0
     st.metric("Saham Naik", naik)
-with col4:
+with m4:
     turun = len(df[df['Chg%'] < 0]) if not df.empty else 0
     st.metric("Saham Turun", turun)
-with col5:
+with m5:
     layak = len(df[~df['Jenis Rekomendasi'].str.contains("Konsolidasi Normal", na=False)]) if not df.empty else 0
     st.metric("Rekomendasi Aktif", layak)
 
-st.markdown("---")
+st.markdown("<br>", unsafe_allow_html=True)
 
-# Filter Sidebar / Kontrol
-st.subheader("🔍 Filter & Navigasi Pasar")
-f_col1, f_col2 = st.columns(2)
-with f_col1:
-    filter_option = st.selectbox(
-        "Pilih Strategi Filter:",
-        ["Semua Saham JII70", "Top Gainer", "Top Loser", "Saham BPJS", "Saham BSJP", "Saham Swing", "Saham Scalping", "Saham Rebound", "Saham BOW"]
-    )
-with f_col2:
-    search_query = st.text_input("Cari Kode Emiten (Cth: ADRO):", "").strip().upper()
+# ============================================================
+# PANEL KONTROL & NAVIGASI STRATEGI (TABS MODERN)
+# ============================================================
+st.markdown("### 🔍 Terminal Filter & Analisis Strategi")
 
-# Terapkan Filter
+tab_labels = [
+    "Semua Saham", "Top Gainer 🚀", "Top Loser 🔻", 
+    "Saham Rebound ⚡", "Saham BOW 🎯", "Saham Swing 📈", 
+    "Saham Scalping 🔥", "Saham BSJP 🌙", "Saham BPJS ☀️"
+]
+
+selected_tab = st.radio("Pilih Mode Tampilan Strategi:", tab_labels, horizontal=True, label_visibility="collapsed")
+
+# Filter Pencarian Emiten
+c_search, c_space = st.columns([2, 3])
+with c_search:
+    search_query = st.text_input("🔍 Cari Kode Emiten Cepat (Cth: ADRO, UNTR):", "").strip().upper()
+
+# Proses Filter Berdasarkan Tab Aktif
 filtered_df = df.copy()
 if not filtered_df.empty:
-    if filter_option == "Top Gainer":
+    if "Top Gainer" in selected_tab:
         filtered_df = filtered_df.sort_values(by="Chg%", ascending=False)
-    elif filter_option == "Top Loser":
+    elif "Top Loser" in selected_tab:
         filtered_df = filtered_df.sort_values(by="Chg%", ascending=True)
-    elif filter_option != "Semua Saham JII70":
-        filtered_df = filtered_df[filtered_df['Jenis Rekomendasi'] == filter_option]
+    elif "Rebound" in selected_tab:
+        filtered_df = filtered_df[filtered_df['Jenis Rekomendasi'] == "Saham Rebound"]
+    elif "BOW" in selected_tab:
+        filtered_df = filtered_df[filtered_df['Jenis Rekomendasi'] == "Saham BOW"]
+    elif "Swing" in selected_tab:
+        filtered_df = filtered_df[filtered_df['Jenis Rekomendasi'] == "Saham Swing"]
+    elif "Scalping" in selected_tab:
+        filtered_df = filtered_df[filtered_df['Jenis Rekomendasi'] == "Saham Scalping"]
+    elif "BSJP" in selected_tab:
+        filtered_df = filtered_df[filtered_df['Jenis Rekomendasi'] == "Saham BSJP"]
+    elif "BPJS" in selected_tab:
+        filtered_df = filtered_df[filtered_df['Jenis Rekomendasi'] == "Saham BPJS"]
 
     if search_query:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
-    # Fungsi Pewarnaan Aman (Color Mapping) untuk Styler Pandas
+    # ============================================================
+    # PEWARNAAN PROFESIONAL & TAMPILAN TABEL
+    # ============================================================
     def color_chg(val):
-        color = '#4ade80' if val > 0 else '#f87171' if val < 0 else '#f1f5f9'
+        color = '#4ade80' if val > 0 else '#f87171' if val < 0 else '#94a3b8'
         return f'color: {color}; font-weight: bold;'
 
     def color_recom(val):
         if "Konsolidasi" in str(val):
-            return 'color: #94a3b8;'
-        return 'color: #4ade80; font-weight: bold;'
+            return 'color: #64748b;'
+        return 'color: #38bdf8; font-weight: bold;'
 
-    # Terapkan Styler khusus pada kolom Chg% dan Jenis Rekomendasi
     styled_df = filtered_df.style.map(color_chg, subset=['Chg%']).map(color_recom, subset=['Jenis Rekomendasi'])
 
-    # Tampilkan Tabel dengan Angka Normal & Warna Indikator Aktif
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Tampilkan Tabel Data Interaktif
     st.dataframe(
         styled_df,
         use_container_width=True,
-        height=500,
+        height=520,
         column_config={
-            "Open": st.column_config.NumberColumn(format="%.2f"),
-            "Preview": st.column_config.NumberColumn(format="%.2f"),
-            "High": st.column_config.NumberColumn(format="%.2f"),
-            "Low": st.column_config.NumberColumn(format="%.2f"),
-            "Close": st.column_config.NumberColumn(format="%.2f"),
-            "Chg%": st.column_config.NumberColumn(format="%.2f%%"),
-            "Volume": st.column_config.NumberColumn(format="%d"),
-            "Frekuensi": st.column_config.NumberColumn(format="%d"),
-            "Support": st.column_config.NumberColumn(format="%.2f"),
-            "Resist": st.column_config.NumberColumn(format="%.2f"),
-            "Pivot": st.column_config.NumberColumn(format="%.2f"),
+            "Ticker": st.column_config.TextColumn("Kode", help="Kode Emiten JII70"),
+            "Open": st.column_config.NumberColumn("Open", format="%.2f"),
+            "Preview": st.column_config.NumberColumn("Prev", format="%.2f"),
+            "High": st.column_config.NumberColumn("High", format="%.2f"),
+            "Low": st.column_config.NumberColumn("Low", format="%.2f"),
+            "Close": st.column_config.NumberColumn("Close", format="%.2f"),
+            "Chg%": st.column_config.NumberColumn("Chg %", format="%.2f%%"),
+            "Volume": st.column_config.NumberColumn("Volume", format="%d"),
+            "Frekuensi": st.column_config.NumberColumn("Freq", format="%d"),
+            "Support": st.column_config.NumberColumn("Support", format="%.2f"),
+            "Resist": st.column_config.NumberColumn("Resist", format="%.2f"),
+            "Pivot": st.column_config.NumberColumn("Pivot", format="%.2f"),
         }
     )
 
-    # Tombol Download Excel
-    csv_data = filtered_df.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        label="📥 Download Data CSV / Excel",
-        data=csv_data,
-        file_name="jii70_screener_output.csv",
-        mime="text/csv"
-    )
+    # ============================================================
+    # TOMBOL DOWNLOAD & FITUR EKSTRA
+    # ============================================================
+    b1, b2 = st.columns([1, 4])
+    with b1:
+        csv_data = filtered_df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Export to CSV",
+            data=csv_data,
+            file_name="jii70_pro_terminal_report.csv",
+            mime="text/csv"
+        )
 else:
-    st.warning("Tidak ada data emiten yang cocok dengan filter.")
+    st.warning("⚠️ Tidak ada data emiten yang cocok dengan filter atau kriteria pencarian.")
