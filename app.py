@@ -159,12 +159,24 @@ def download_market_data():
                 jenis_recom = "Saham BPJS"
                 alasan = "Beli Pagi Jual Siang: Stabilitas harga di sesi pertama aman."
 
+            # Format angka harga & volume menjadi string bertitik ribuan tanpa desimal berlebih (.00)
             results.append({
-                'Ticker': t, 'Open': round(o, 2), 'Preview': round(p, 2), 'High': round(h, 2),
-                'Low': round(l, 2), 'Close': round(c, 2), 'Chg%': round(chg_pct, 2), 'Volume': v,
-                'Frekuensi': freq, 'Support': round(support, 2), 'Resist': round(resist, 2),
-                'Pivot': round(pivot, 2), 'Recom Beli': round(c, 2), 'Recom Jual': round(resist, 2),
-                'Jenis Rekomendasi': jenis_recom, 'Alasan Rekomendasi': alasan
+                'Ticker': t, 
+                'Open': f"{o:,.0f}".replace(",", "."), 
+                'Preview': f"{p:,.0f}".replace(",", "."), 
+                'High': f"{h:,.0f}".replace(",", "."),
+                'Low': f"{l:,.0f}".replace(",", "."), 
+                'Close': f"{c:,.0f}".replace(",", "."), 
+                'Chg%': round(chg_pct, 2), 
+                'Volume': f"{v:,.0f}".replace(",", "."),
+                'Frekuensi': f"{freq:,.0f}".replace(",", "."), 
+                'Support': f"{support:,.0f}".replace(",", "."), 
+                'Resist': f"{resist:,.0f}".replace(",", "."),
+                'Pivot': f"{pivot:,.0f}".replace(",", "."), 
+                'Recom Beli': f"{c:,.0f}".replace(",", "."), 
+                'Recom Jual': f"{resist:,.0f}".replace(",", "."),
+                'Jenis Rekomendasi': jenis_recom, 
+                'Alasan Rekomendasi': alasan
             })
         except Exception:
             continue
@@ -309,21 +321,7 @@ if not filtered_df.empty:
     st.dataframe(
         styled_df,
         use_container_width=True,
-        height=520,
-        column_config={
-            "Ticker": st.column_config.TextColumn("Kode", help="Kode Emiten JII70"),
-            "Open": st.column_config.NumberColumn("Open", format="%.2f"),
-            "Preview": st.column_config.NumberColumn("Prev", format="%.2f"),
-            "High": st.column_config.NumberColumn("High", format="%.2f"),
-            "Low": st.column_config.NumberColumn("Low", format="%.2f"),
-            "Close": st.column_config.NumberColumn("Close", format="%.2f"),
-            "Chg%": st.column_config.NumberColumn("Chg %", format="%.2f%%"),
-            "Volume": st.column_config.NumberColumn("Volume", format="%d"),
-            "Frekuensi": st.column_config.NumberColumn("Freq", format="%d"),
-            "Support": st.column_config.NumberColumn("Support", format="%.2f"),
-            "Resist": st.column_config.NumberColumn("Resist", format="%.2f"),
-            "Pivot": st.column_config.NumberColumn("Pivot", format="%.2f"),
-        }
+        height=520
     )
 
     # ============================================================
