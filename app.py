@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 waktu_wib = datetime.now(ZoneInfo("Asia/Jakarta"))
 current_time_str = waktu_wib.strftime("%A, %d %b %Y | %H:%M:%S")
 
-st.write(f"🕒 Waktu Akses: {current_time_str}")
+
 
 import os
 
