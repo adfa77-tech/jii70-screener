@@ -3,9 +3,10 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # ============================================================
-# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL MODE)
+# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V2)
 # ============================================================
 st.set_page_config(
     page_title="JII70 Syariah Pro Terminal",
@@ -14,33 +15,45 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling CSS Modern Glassmorphism & Neon Financial Theme
+# Custom Styling CSS & UI Pelangi Keuangan Profesional (Compact Metrics & Colored Columns)
 st.markdown("""
     <style>
     .main { 
-        background: linear-gradient(135deg, #05070b 0%, #0f172a 100%); 
+        background: linear-gradient(135deg, #030712 0%, #0f172a 100%); 
         color: #f1f5f9; 
     }
-    .stMetric { 
-        background: linear-gradient(145deg, #111827 0%, #1f2937 100%); 
-        border: 1px solid #334155; 
-        padding: 18px; 
-        border-radius: 14px; 
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    
+    /* Ukuran Kotak Kartu Metrik Lebih Kecil & Warna Berbeda-beda */
+    .metric-ihsg { background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%); border: 1px solid #4338ca; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .metric-emiten { background: linear-gradient(145deg, #064e3b 0%, #065f46 100%); border: 1px solid #059669; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .metric-naik { background: linear-gradient(145deg, #14532d 0%, #166534 100%); border: 1px solid #22c55e; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .metric-turun { background: linear-gradient(145deg, #7f1d1d 0%, #991b1b 100%); border: 1px solid #ef4444; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .metric-rekom { background: linear-gradient(145deg, #3b0764 0%, #581c87 100%); border: 1px solid #a855f7; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    
+    .metric-label { font-size: 0.75rem; color: #cbd5e1; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+    .metric-value { font-size: 1.25rem; font-weight: 800; color: #ffffff; }
+    
+    /* Jam Realtime WIB Box */
+    .clock-box {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid #38bdf8;
+        padding: 8px 16px;
+        border-radius: 8px;
+        color: #38bdf8;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: inline-block;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
     }
-    .stMetric label {
-        color: #94a3b8 !important;
-        font-weight: 600 !important;
-    }
-    h1, h2, h3 {
-        font-family: 'Segoe UI', sans-serif;
-        letter-spacing: -0.5px;
-    }
-    .terminal-header {
-        background: rgba(15, 23, 42, 0.8);
-        border-bottom: 1px solid #1e293b;
-        padding: 10px 0;
-        margin-bottom: 20px;
+    
+    /* Styling Header Tabel agar Bold dan Berwarna Berbeda */
+    thead tr th {
+        background-color: #1e293b !important;
+        color: #38bdf8 !important;
+        font-weight: 900 !important;
+        font-size: 0.95rem !important;
+        text-align: center !important;
+        border-bottom: 2px solid #0284c7 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -159,40 +172,80 @@ def download_market_data():
     return pd.DataFrame(results), {'current': ihsg_current, 'chg': ihsg_chg}
 
 # ============================================================
-# HEADER & BRANDING TERMINAL
+# HEADER & JAM REALTIME WIB
 # ============================================================
-st.markdown("""
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
-        <h1 style="margin: 0; font-size: 2.2rem; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+col_h1, col_h2 = st.columns([3, 1])
+with col_h1:
+    st.markdown("""
+        <h1 style="margin: 0; font-size: 2rem; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             ⚡ JII70 SYARIAH PRO TERMINAL
         </h1>
-        <span style="background: #1e293b; color: #38bdf8; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; border: 1px solid #334155; font-weight: 600;">
-            LIVE MARKET FEED
-        </span>
-    </div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+with col_h2:
+    waktu_wib = datetime.now(ZoneInfo("Asia/Jakarta"))
+    waktu_str = waktu_wib.strftime("%d %b %Y | %H:%M:%S WIB")
+    st.markdown(f'<div style="text-align: right;"><span class="clock-box">🕒 {waktu_str}</span></div>', unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Load Data
 with st.spinner("Sinkronisasi real-time dengan server bursa..."):
     df, ihsg_info = download_market_data()
 
 # ============================================================
-# KARTU METRIK STATISTIK UTAMA
+# KARTU METRIK KOMPAK (UKURAN KECIL DENGAN WARNA BERBEDA)
 # ============================================================
 m1, m2, m3, m4, m5 = st.columns(5)
+
+chg_color = "#4ade80" if ihsg_info['chg'] >= 0 else "#f87171"
 with m1:
-    st.metric("IHSG Market", f"{ihsg_info['current']:,.2f}", f"{ihsg_info['chg']:+.2f}%")
+    st.markdown(f"""
+        <div class="metric-ihsg">
+            <div class="metric-label">IHSG Market</div>
+            <div class="metric-value">{ihsg_info['current']:,.2f}</div>
+            <div style="font-size: 0.8rem; color: {chg_color}; font-weight: bold; margin-top: 2px;">{ihsg_info['chg']:+.2f}%</div>
+        </div>
+    """, unsafe_allow_html=True)
+
 with m2:
-    st.metric("Total Emiten", len(df))
+    st.markdown(f"""
+        <div class="metric-emiten">
+            <div class="metric-label">Total Emiten</div>
+            <div class="metric-value">{len(df)}</div>
+            <div style="font-size: 0.8rem; color: #34d399; margin-top: 2px;">Aktif Terpantau</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+naik = len(df[df['Chg%'] > 0]) if not df.empty else 0
 with m3:
-    naik = len(df[df['Chg%'] > 0]) if not df.empty else 0
-    st.metric("Saham Naik", naik)
+    st.markdown(f"""
+        <div class="metric-naik">
+            <div class="metric-label">Saham Naik</div>
+            <div class="metric-value">{naik}</div>
+            <div style="font-size: 0.8rem; color: #4ade80; margin-top: 2px;">Bullish Sesi</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+turun = len(df[df['Chg%'] < 0]) if not df.empty else 0
 with m4:
-    turun = len(df[df['Chg%'] < 0]) if not df.empty else 0
-    st.metric("Saham Turun", turun)
+    st.markdown(f"""
+        <div class="metric-turun">
+            <div class="metric-label">Saham Turun</div>
+            <div class="metric-value">{turun}</div>
+            <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 2px;">Bearish Sesi</div>
+        </div>
+    """, unsafe_allow_html=True)
+
+layak = len(df[~df['Jenis Rekomendasi'].str.contains("Konsolidasi Normal", na=False)]) if not df.empty else 0
 with m5:
-    layak = len(df[~df['Jenis Rekomendasi'].str.contains("Konsolidasi Normal", na=False)]) if not df.empty else 0
-    st.metric("Rekomendasi Aktif", layak)
+    st.markdown(f"""
+        <div class="metric-rekom">
+            <div class="metric-label">Rekomendasi Aktif</div>
+            <div class="metric-value">{layak}</div>
+            <div style="font-size: 0.8rem; color: #c084fc; margin-top: 2px;">Setup Siap</div>
+        </div>
+    """, unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -209,7 +262,6 @@ tab_labels = [
 
 selected_tab = st.radio("Pilih Mode Tampilan Strategi:", tab_labels, horizontal=True, label_visibility="collapsed")
 
-# Filter Pencarian Emiten
 c_search, c_space = st.columns([2, 3])
 with c_search:
     search_query = st.text_input("🔍 Cari Kode Emiten Cepat (Cth: ADRO, UNTR):", "").strip().upper()
@@ -238,7 +290,7 @@ if not filtered_df.empty:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
     # ============================================================
-    # PEWARNAAN PROFESIONAL & TAMPILAN TABEL
+    # PEWARNAAN PROFESIONAL & KOLOM BERBEDA
     # ============================================================
     def color_chg(val):
         color = '#4ade80' if val > 0 else '#f87171' if val < 0 else '#94a3b8'
@@ -275,7 +327,7 @@ if not filtered_df.empty:
     )
 
     # ============================================================
-    # TOMBOL DOWNLOAD & FITUR EKSTRA
+    # TOMBOL DOWNLOAD
     # ============================================================
     b1, b2 = st.columns([1, 4])
     with b1:
