@@ -136,7 +136,7 @@ def download_market_data():
 
     return pd.DataFrame(results), {'current': ihsg_current, 'chg': ihsg_chg}
 
-# Header Utama (Tanpa Waktu Akses)
+# Header Utama
 st.title("⚡ JII70 SYARIAH PRO TERMINAL")
 
 # Load Data
@@ -185,8 +185,25 @@ if not filtered_df.empty:
     if search_query:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
-    # Tampilkan Tabel Data
-    st.dataframe(filtered_df, use_container_width=True, height=500)
+    # Fungsi Pewarnaan Angka & Rekomendasi (Warna Warni)
+    def style_table(val):
+        if isinstance(val, (int, float)):
+            if val > 0:
+                return 'color: #4ade80; font-weight: bold;' # Hijau
+            elif val < 0:
+                return 'color: #f87171; font-weight: bold;' # Merah
+        elif isinstance(val, str):
+            if "Rebound" in val or "Scalping" in val:
+                return 'color: #f43f5e; font-weight: bold;'
+            elif "Swing" in val or "BOW" in val or "BSJP" in val or "BPJS" in val:
+                return 'color: #4ade80; font-weight: bold;'
+        return ''
+
+    # Terapkan Styler ke Tabel
+    styled_df = filtered_df.style.map(style_table, subset=['Chg%', 'Jenis Rekomendasi'])
+
+    # Tampilkan Tabel Berwarna
+    st.dataframe(styled_df, use_container_width=True, height=500)
 
     # Tombol Download Excel
     csv_data = filtered_df.to_csv(index=False).encode('utf-8')
