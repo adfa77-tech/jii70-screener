@@ -185,25 +185,25 @@ if not filtered_df.empty:
     if search_query:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
-    # Fungsi Pewarnaan Angka & Rekomendasi (Warna Warni)
-    def style_table(val):
-        if isinstance(val, (int, float)):
-            if val > 0:
-                return 'color: #4ade80; font-weight: bold;' # Hijau
-            elif val < 0:
-                return 'color: #f87171; font-weight: bold;' # Merah
-        elif isinstance(val, str):
-            if "Rebound" in val or "Scalping" in val:
-                return 'color: #f43f5e; font-weight: bold;'
-            elif "Swing" in val or "BOW" in val or "BSJP" in val or "BPJS" in val:
-                return 'color: #4ade80; font-weight: bold;'
-        return ''
-
-    # Terapkan Styler ke Tabel
-    styled_df = filtered_df.style.map(style_table, subset=['Chg%', 'Jenis Rekomendasi'])
-
-    # Tampilkan Tabel Berwarna
-    st.dataframe(styled_df, use_container_width=True, height=500)
+    # Tampilkan Tabel Normal Menggunakan Column Config (Aman dari Bug Angka Nol)
+    st.dataframe(
+        filtered_df,
+        use_container_width=True,
+        height=500,
+        column_config={
+            "Open": st.column_config.NumberColumn(format="%.2f"),
+            "Preview": st.column_config.NumberColumn(format="%.2f"),
+            "High": st.column_config.NumberColumn(format="%.2f"),
+            "Low": st.column_config.NumberColumn(format="%.2f"),
+            "Close": st.column_config.NumberColumn(format="%.2f"),
+            "Chg%": st.column_config.NumberColumn(format="%.2f%%"),
+            "Volume": st.column_config.NumberColumn(format="%d"),
+            "Frekuensi": st.column_config.NumberColumn(format="%d"),
+            "Support": st.column_config.NumberColumn(format="%.2f"),
+            "Resist": st.column_config.NumberColumn(format="%.2f"),
+            "Pivot": st.column_config.NumberColumn(format="%.2f"),
+        }
+    )
 
     # Tombol Download Excel
     csv_data = filtered_df.to_csv(index=False).encode('utf-8')
