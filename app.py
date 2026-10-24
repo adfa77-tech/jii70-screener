@@ -3,14 +3,6 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 from datetime import datetime
-from zoneinfo import ZoneInfo
-
-# Mengatur zona waktu khusus ke Waktu Indonesia Barat (WIB / Jakarta)
-waktu_wib = datetime.now(ZoneInfo("Asia/Jakarta"))
-current_time_str = waktu_wib.strftime("%A, %d %b %Y | %H:%M:%S")
-
-
-
 import os
 
 # ============================================================
@@ -23,12 +15,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Styling CSS Glassmorphism Dark Neon (Menyesuaikan tema terminal Anda)
+# Styling CSS Glassmorphism Dark Neon
 st.markdown("""
     <style>
     .main { background-color: #07090e; color: #f1f5f9; }
     .stMetric { background-color: #111827; border: 1px solid #1f2937; padding: 15px; border-radius: 12px; }
-    .metric-card { background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 15px; text-align: center; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -47,7 +38,7 @@ def download_market_data():
     results = []
     ihsg_current = 0.0
     ihsg_chg = 0.0
-
+    
     try:
         ihsg_df = yf.download("^JKSE", period="5d", interval="1d", progress=False, auto_adjust=False)
         if isinstance(ihsg_df.columns, pd.MultiIndex):
@@ -95,7 +86,7 @@ def download_market_data():
 
             chg_pct = ((c - p) / p) * 100.0
             freq = int(v / 1500) if v > 0 else 100
-
+            
             pivot = (h + l + c) / 3.0
             support = (2.0 * pivot) - h
             resist = (2.0 * pivot) - l
@@ -104,11 +95,11 @@ def download_market_data():
             ma5 = float(c_s.rolling(window=min(5, len(c_s))).mean().iloc[-1])
             ma20 = float(c_s.rolling(window=min(20, len(c_s))).mean().iloc[-1])
             ma50 = float(c_s.rolling(window=min(50, len(c_s))).mean().iloc[-1]) if len(c_s) >= 50 else ma20
-
+            
             vol_sma5 = float(v_s.rolling(window=min(5, len(v_s))).mean().iloc[-1]) if len(v_s) else 0.0
+
             intraday_drop = ((l - h) / h) * 100.0
             rebound_low = ((c - l) / l) * 100.0
-            
             is_rebound = (intraday_drop <= -2.5) and (rebound_low >= 2.0) and (v > vol_sma5 * 1.8) and (c >= vwap)
 
             jenis_recom = "Konsolidasi Normal"
@@ -134,31 +125,19 @@ def download_market_data():
                 alasan = "Beli Pagi Jual Siang: Stabilitas harga di sesi pertama aman."
 
             results.append({
-                'Ticker': t,
-                'Open': round(o, 2),
-                'Preview': round(p, 2),
-                'High': round(h, 2),
-                'Low': round(l, 2),
-                'Close': round(c, 2),
-                'Chg%': round(chg_pct, 2),
-                'Volume': v,
-                'Frekuensi': freq,
-                'Support': round(support, 2),
-                'Resist': round(resist, 2),
-                'Pivot': round(pivot, 2),
-                'Recom Beli': round(c, 2),
-                'Recom Jual': round(resist, 2),
-                'Jenis Rekomendasi': jenis_recom,
-                'Alasan Rekomendasi': alasan
+                'Ticker': t, 'Open': round(o, 2), 'Preview': round(p, 2), 'High': round(h, 2),
+                'Low': round(l, 2), 'Close': round(c, 2), 'Chg%': round(chg_pct, 2), 'Volume': v,
+                'Frekuensi': freq, 'Support': round(support, 2), 'Resist': round(resist, 2),
+                'Pivot': round(pivot, 2), 'Recom Beli': round(c, 2), 'Recom Jual': round(resist, 2),
+                'Jenis Rekomendasi': jenis_recom, 'Alasan Rekomendasi': alasan
             })
         except Exception:
             continue
 
     return pd.DataFrame(results), {'current': ihsg_current, 'chg': ihsg_chg}
 
-# Header Utama
+# Header Utama (Tanpa Waktu Akses)
 st.title("⚡ JII70 SYARIAH PRO TERMINAL")
-st.write(f"🕒 Waktu Akses: {datetime.now().strftime('%A, %d %b %Y | %H:%M:%S')}")
 
 # Load Data
 with st.spinner("Menghubungkan ke server Yahoo Finance untuk data riil bursa..."):
@@ -167,7 +146,6 @@ with st.spinner("Menghubungkan ke server Yahoo Finance untuk data riil bursa..."
 # Widget IHSG & Statistik
 col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
-    col_color = "normal" if ihsg_info['chg'] >= 0 else "inverse"
     st.metric("IHSG Market", f"{ihsg_info['current']:,.2f}", f"{ihsg_info['chg']:+.2f}%")
 with col2:
     st.metric("Total Emiten", len(df))
@@ -186,14 +164,11 @@ st.markdown("---")
 # Filter Sidebar / Kontrol
 st.subheader("🔍 Filter & Navigasi Pasar")
 f_col1, f_col2 = st.columns(2)
-
 with f_col1:
-    filter_option = st.selectbox("Pilih Strategi Filter:", [
-        "Semua Saham JII70", "Top Gainer", "Top Loser", 
-        "Saham BPJS", "Saham BSJP", "Saham Swing", 
-        "Saham Scalping", "Saham Rebound", "Saham BOW"
-    ])
-
+    filter_option = st.selectbox(
+        "Pilih Strategi Filter:",
+        ["Semua Saham JII70", "Top Gainer", "Top Loser", "Saham BPJS", "Saham BSJP", "Saham Swing", "Saham Scalping", "Saham Rebound", "Saham BOW"]
+    )
 with f_col2:
     search_query = st.text_input("Cari Kode Emiten (Cth: ADRO):", "").strip().upper()
 
@@ -210,10 +185,9 @@ if not filtered_df.empty:
     if search_query:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
-# Tampilkan Tabel Data
-if not filtered_df.empty:
+    # Tampilkan Tabel Data
     st.dataframe(filtered_df, use_container_width=True, height=500)
-    
+
     # Tombol Download Excel
     csv_data = filtered_df.to_csv(index=False).encode('utf-8')
     st.download_button(
