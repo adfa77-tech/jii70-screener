@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 # ============================================================
-# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V3)
+# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V4 - SOFT COLUMN COLORS)
 # ============================================================
 st.set_page_config(
     page_title="JII70 Syariah Pro Terminal",
@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling CSS & Warna Berbeda di Setiap Kolom Angka (Multi-Color Financial Terminal)
+# Custom Styling CSS & Desain Terminal Keuangan Elegan
 st.markdown("""
     <style>
     .main { 
@@ -166,7 +166,7 @@ def download_market_data():
                 'High': f"{h:,.0f}".replace(",", "."),
                 'Low': f"{l:,.0f}".replace(",", "."), 
                 'Close': f"{c:,.0f}".replace(",", "."), 
-                'Chg%': f"{chg_pct:+.2f}%",  # Dibuat sederhana 2 digit desimal
+                'Chg%': f"{chg_pct:+.2f}%",  
                 'Volume': f"{v:,.0f}".replace(",", "."),
                 'Frekuensi': f"{freq:,.0f}".replace(",", "."), 
                 'Support': f"{support:,.0f}".replace(",", "."), 
@@ -205,7 +205,7 @@ with st.spinner("Sinkronisasi real-time dengan server bursa..."):
     df, ihsg_info = download_market_data()
 
 # ============================================================
-# KARTU METRIK KOMPAK (UKURAN KECIL DENGAN WARNA BERBEDA)
+# KARTU METRIK KOMPAK
 # ============================================================
 m1, m2, m3, m4, m5 = st.columns(5)
 
@@ -301,23 +301,42 @@ if not filtered_df.empty:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
     # ============================================================
-    # PEWARNAAN BERBEDA DI SETIAP KOLOM ANGKA
+    # PEWARNAAN LEMBUT & BERBEDA DI SETIAP KOLOM TABEL
     # ============================================================
-    def color_columns(val):
+    def color_by_column(val, col_name):
         s_val = str(val)
-        if "%" in s_val:
-            color = '#4ade80' if "+" in s_val else '#f87171' if "-" in s_val else '#94a3b8'
-            return f'color: {color}; font-weight: bold;'
-        elif "Rebound" in s_val or "Scalping" in s_val:
-            return 'color: #f43f5e; font-weight: bold;'
-        elif "Swing" in s_val or "BOW" in s_val or "BSJP" in s_val or "BPJS" in s_val:
-            return 'color: #38bdf8; font-weight: bold;'
-        elif "Konsolidasi" in s_val:
-            return 'color: #64748b;'
-        return ''
+        
+        # Pewarnaan khusus kolom Chg% & Rekomendasi
+        if col_name == 'Chg%':
+            if "+" in s_val:
+                return 'background-color: #064e3b; color: #4ade80; font-weight: bold;'
+            elif "-" in s_val:
+                return 'background-color: #7f1d1d; color: #f87171; font-weight: bold;'
+        elif col_name == 'Jenis Rekomendasi':
+            if "Konsolidasi" in s_val:
+                return 'background-color: #0f172a; color: #64748b;'
+            return 'background-color: #1e1b4b; color: #38bdf8; font-weight: bold;'
+        
+        # Pewarnaan latar belakang lembut dan berbeda di setiap kolom lainnya
+        col_colors = {
+            'Ticker': 'background-color: #0f172a; color: #f8fafc; font-weight: bold;',
+            'Open': 'background-color: #111827; color: #fbbf24;',
+            'Preview': 'background-color: #1f2937; color: #34d399;',
+            'High': 'background-color: #0c4a6e; color: #38bdf8;',
+            'Low': 'background-color: #4c1d95; color: #c084fc;',
+            'Close': 'background-color: #14532d; color: #4ade80; font-weight: bold;',
+            'Volume': 'background-color: #1e1b4b; color: #818cf8;',
+            'Frekuensi': 'background-color: #312e81; color: #a5b4fc;',
+            'Support': 'background-color: #701a75; color: #f472b6;',
+            'Resist': 'background-color: #831843; color: #fb7185;',
+            'Pivot': 'background-color: #78350f; color: #fcd34d;',
+            'Recom Beli': 'background-color: #14532d; color: #6ee7b7;',
+            'Recom Jual': 'background-color: #581c87; color: #d8b4fe;'
+        }
+        return col_colors.get(col_name, '')
 
-    # Menerapkan styling warna dinamis ke kolom tabel
-    styled_df = filtered_df.style.map(color_columns)
+    # Menerapkan styling warna dinamis per kolom secara presisi
+    styled_df = filtered_df.style.apply(lambda col: [color_by_column(v, col.name) for v in col], axis=0)
 
     st.markdown("<br>", unsafe_allow_html=True)
     
