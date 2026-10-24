@@ -15,11 +15,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Styling CSS Glassmorphism Dark Neon
+# Styling CSS Glassmorphism Dark Neon + Custom Color Tags
 st.markdown("""
     <style>
     .main { background-color: #07090e; color: #f1f5f9; }
     .stMetric { background-color: #111827; border: 1px solid #1f2937; padding: 15px; border-radius: 12px; }
+    .green-text { color: #4ade80; font-weight: bold; }
+    .red-text { color: #f87171; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -185,9 +187,22 @@ if not filtered_df.empty:
     if search_query:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
-    # Tampilkan Tabel Normal Menggunakan Column Config (Aman dari Bug Angka Nol)
+    # Fungsi Pewarnaan Aman (Color Mapping) untuk Styler Pandas
+    def color_chg(val):
+        color = '#4ade80' if val > 0 else '#f87171' if val < 0 else '#f1f5f9'
+        return f'color: {color}; font-weight: bold;'
+
+    def color_recom(val):
+        if "Konsolidasi" in str(val):
+            return 'color: #94a3b8;'
+        return 'color: #4ade80; font-weight: bold;'
+
+    # Terapkan Styler khusus pada kolom Chg% dan Jenis Rekomendasi
+    styled_df = filtered_df.style.map(color_chg, subset=['Chg%']).map(color_recom, subset=['Jenis Rekomendasi'])
+
+    # Tampilkan Tabel dengan Angka Normal & Warna Indikator Aktif
     st.dataframe(
-        filtered_df,
+        styled_df,
         use_container_width=True,
         height=500,
         column_config={
