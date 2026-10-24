@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Mengatur zona waktu khusus ke Waktu Indonesia Barat (WIB / Jakarta)
 waktu_wib = datetime.now(ZoneInfo("Asia/Jakarta"))
