@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 # ============================================================
-# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V2)
+# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V3)
 # ============================================================
 st.set_page_config(
     page_title="JII70 Syariah Pro Terminal",
@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling CSS & UI Pelangi Keuangan Profesional (Compact Metrics & Colored Columns)
+# Custom Styling CSS & Warna Berbeda di Setiap Kolom Angka (Multi-Color Financial Terminal)
 st.markdown("""
     <style>
     .main { 
@@ -46,7 +46,7 @@ st.markdown("""
         box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
     }
     
-    /* Styling Header Tabel agar Bold dan Berwarna Berbeda */
+    /* Styling Header Tabel agar Bold dan Berwarna Profesional */
     thead tr th {
         background-color: #1e293b !important;
         color: #38bdf8 !important;
@@ -159,7 +159,6 @@ def download_market_data():
                 jenis_recom = "Saham BPJS"
                 alasan = "Beli Pagi Jual Siang: Stabilitas harga di sesi pertama aman."
 
-            # Format angka harga & volume menjadi string bertitik ribuan tanpa desimal berlebih (.00)
             results.append({
                 'Ticker': t, 
                 'Open': f"{o:,.0f}".replace(",", "."), 
@@ -167,7 +166,7 @@ def download_market_data():
                 'High': f"{h:,.0f}".replace(",", "."),
                 'Low': f"{l:,.0f}".replace(",", "."), 
                 'Close': f"{c:,.0f}".replace(",", "."), 
-                'Chg%': round(chg_pct, 2), 
+                'Chg%': f"{chg_pct:+.2f}%",  # Dibuat sederhana 2 digit desimal
                 'Volume': f"{v:,.0f}".replace(",", "."),
                 'Frekuensi': f"{freq:,.0f}".replace(",", "."), 
                 'Support': f"{support:,.0f}".replace(",", "."), 
@@ -229,7 +228,7 @@ with m2:
         </div>
     """, unsafe_allow_html=True)
 
-naik = len(df[df['Chg%'] > 0]) if not df.empty else 0
+naik = len(df[df['Chg%'].str.contains(r"\+", na=False)]) if not df.empty else 0
 with m3:
     st.markdown(f"""
         <div class="metric-naik">
@@ -239,7 +238,7 @@ with m3:
         </div>
     """, unsafe_allow_html=True)
 
-turun = len(df[df['Chg%'] < 0]) if not df.empty else 0
+turun = len(df[df['Chg%'].str.contains(r"\-", na=False)]) if not df.empty else 0
 with m4:
     st.markdown(f"""
         <div class="metric-turun">
@@ -302,27 +301,28 @@ if not filtered_df.empty:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
     # ============================================================
-    # PEWARNAAN PROFESIONAL & KOLOM BERBEDA
+    # PEWARNAAN BERBEDA DI SETIAP KOLOM ANGKA
     # ============================================================
-    def color_chg(val):
-        color = '#4ade80' if val > 0 else '#f87171' if val < 0 else '#94a3b8'
-        return f'color: {color}; font-weight: bold;'
-
-    def color_recom(val):
-        if "Konsolidasi" in str(val):
+    def color_columns(val):
+        s_val = str(val)
+        if "%" in s_val:
+            color = '#4ade80' if "+" in s_val else '#f87171' if "-" in s_val else '#94a3b8'
+            return f'color: {color}; font-weight: bold;'
+        elif "Rebound" in s_val or "Scalping" in s_val:
+            return 'color: #f43f5e; font-weight: bold;'
+        elif "Swing" in s_val or "BOW" in s_val or "BSJP" in s_val or "BPJS" in s_val:
+            return 'color: #38bdf8; font-weight: bold;'
+        elif "Konsolidasi" in s_val:
             return 'color: #64748b;'
-        return 'color: #38bdf8; font-weight: bold;'
+        return ''
 
-    styled_df = filtered_df.style.map(color_chg, subset=['Chg%']).map(color_recom, subset=['Jenis Rekomendasi'])
+    # Menerapkan styling warna dinamis ke kolom tabel
+    styled_df = filtered_df.style.map(color_columns)
 
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Tampilkan Tabel Data Interaktif
-    st.dataframe(
-        styled_df,
-        use_container_width=True,
-        height=520
-    )
+    st.dataframe(styled_df, use_container_width=True, height=520)
 
     # ============================================================
     # TOMBOL DOWNLOAD
