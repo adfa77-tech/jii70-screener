@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 # ============================================================
-# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V4 - SOFT COLUMN COLORS)
+# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V5)
 # ============================================================
 st.set_page_config(
     page_title="JII70 Syariah Pro Terminal",
@@ -183,7 +183,7 @@ def download_market_data():
     return pd.DataFrame(results), {'current': ihsg_current, 'chg': ihsg_chg}
 
 # ============================================================
-# HEADER & JAM REALTIME WIB
+# HEADER, AUTHOR & JAM REALTIME WIB
 # ============================================================
 col_h1, col_h2 = st.columns([3, 1])
 with col_h1:
@@ -191,6 +191,9 @@ with col_h1:
         <h1 style="margin: 0; font-size: 2rem; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             ⚡ JII70 SYARIAH PRO TERMINAL
         </h1>
+        <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: #94a3b8; font-weight: 600; letter-spacing: 0.5px;">
+            Made By : ADI CANDRA, S.HI, MM
+        </p>
     """, unsafe_allow_html=True)
 
 with col_h2:
@@ -306,7 +309,6 @@ if not filtered_df.empty:
     def color_by_column(val, col_name):
         s_val = str(val)
         
-        # Pewarnaan khusus kolom Chg% & Rekomendasi
         if col_name == 'Chg%':
             if "+" in s_val:
                 return 'background-color: #064e3b; color: #4ade80; font-weight: bold;'
@@ -317,7 +319,6 @@ if not filtered_df.empty:
                 return 'background-color: #0f172a; color: #64748b;'
             return 'background-color: #1e1b4b; color: #38bdf8; font-weight: bold;'
         
-        # Pewarnaan latar belakang lembut dan berbeda di setiap kolom lainnya
         col_colors = {
             'Ticker': 'background-color: #0f172a; color: #f8fafc; font-weight: bold;',
             'Open': 'background-color: #111827; color: #fbbf24;',
@@ -335,7 +336,6 @@ if not filtered_df.empty:
         }
         return col_colors.get(col_name, '')
 
-    # Menerapkan styling warna dinamis per kolom secara presisi
     styled_df = filtered_df.style.apply(lambda col: [color_by_column(v, col.name) for v in col], axis=0)
 
     st.markdown("<br>", unsafe_allow_html=True)
