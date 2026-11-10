@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import yfinance as yf
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -15,27 +17,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling CSS & Desain Terminal Keuangan Elegan
+# Custom Styling CSS & Desain Terminal Keuangan dengan Background Pemandangan Alam
 st.markdown("""
     <style>
-    .main { 
-        background: linear-gradient(135deg, #030712 0%, #0f172a 100%); 
-        color: #f1f5f9; 
+    .stApp {
+        background: linear-gradient(rgba(3, 7, 18, 0.85), rgba(15, 23, 42, 0.90)), 
+                    url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1920&auto=format&fit=crop');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: #f1f5f9;
     }
     
     /* Ukuran Kotak Kartu Metrik Lebih Kecil & Warna Berbeda-beda */
-    .metric-ihsg { background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%); border: 1px solid #4338ca; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .metric-emiten { background: linear-gradient(145deg, #064e3b 0%, #065f46 100%); border: 1px solid #059669; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .metric-naik { background: linear-gradient(145deg, #14532d 0%, #166534 100%); border: 1px solid #22c55e; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .metric-turun { background: linear-gradient(145deg, #7f1d1d 0%, #991b1b 100%); border: 1px solid #ef4444; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-    .metric-rekom { background: linear-gradient(145deg, #3b0764 0%, #581c87 100%); border: 1px solid #a855f7; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .metric-ihsg { background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%); border: 1px solid #4338ca; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .metric-emiten { background: linear-gradient(145deg, #064e3b 0%, #065f46 100%); border: 1px solid #059669; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .metric-naik { background: linear-gradient(145deg, #14532d 0%, #166534 100%); border: 1px solid #22c55e; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .metric-turun { background: linear-gradient(145deg, #7f1d1d 0%, #991b1b 100%); border: 1px solid #ef4444; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    .metric-rekom { background: linear-gradient(145deg, #3b0764 0%, #581c87 100%); border: 1px solid #a855f7; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
     
     .metric-label { font-size: 0.75rem; color: #cbd5e1; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
     .metric-value { font-size: 1.25rem; font-weight: 800; color: #ffffff; }
     
     /* Jam Realtime WIB Box */
     .clock-box {
-        background: rgba(30, 41, 59, 0.7);
+        background: rgba(30, 41, 59, 0.85);
         border: 1px solid #38bdf8;
         padding: 8px 16px;
         border-radius: 8px;
@@ -43,7 +49,7 @@ st.markdown("""
         font-weight: 700;
         font-size: 0.9rem;
         display: inline-block;
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
     }
     
     /* Styling Header Tabel agar Bold dan Berwarna Profesional */
@@ -90,11 +96,11 @@ def download_market_data():
     for t in JII70_TICKERS:
         symbol = f"{t}.JK"
         try:
-            hist = yf.download(symbol, period="1mo", interval="1d", progress=False, auto_adjust=False, timeout=10)
+            hist = yf.download(symbol, period="2mo", interval="1d", progress=False, auto_adjust=False, timeout=10)
             if isinstance(hist.columns, pd.MultiIndex):
                 hist.columns = hist.columns.get_level_values(0)
             
-            if hist is None or hist.empty or len(hist) < 2:
+            if hist is None or hist.empty or len(hist) < 20:
                 continue
 
             def get_s(col):
@@ -106,7 +112,7 @@ def download_market_data():
                 return pd.to_numeric(d, errors="coerce").dropna()
 
             o_s, h_s, l_s, c_s, v_s = get_s("Open"), get_s("High"), get_s("Low"), get_s("Close"), get_s("Volume")
-            if len(c_s) < 2:
+            if len(c_s) < 20:
                 continue
 
             o = float(o_s.iloc[-1]) if len(o_s) > 0 else float(c_s.iloc[-1])
@@ -127,15 +133,17 @@ def download_market_data():
             resist = (2.0 * pivot) - l
             vwap = ((pivot * v) / v) if v > 0 else pivot
 
-            ma5 = float(c_s.rolling(window=min(5, len(c_s))).mean().iloc[-1])
-            ma20 = float(c_s.rolling(window=min(20, len(c_s))).mean().iloc[-1])
-            ma50 = float(c_s.rolling(window=min(50, len(c_s))).mean().iloc[-1]) if len(c_s) >= 50 else ma20
+            ma5 = float(c_s.rolling(window=5).mean().iloc[-1])
+            ma10 = float(c_s.rolling(window=10).mean().iloc[-1])
+            ma20 = float(c_s.rolling(window=20).mean().iloc[-1])
+            ma50 = float(c_s.rolling(window=50).mean().iloc[-1]) if len(c_s) >= 50 else ma20
             
-            vol_sma5 = float(v_s.rolling(window=min(5, len(v_s))).mean().iloc[-1]) if len(v_s) else 0.0
+            vol_sma5 = float(v_s.rolling(window=5).mean().iloc[-1]) if len(v_s) >= 5 else 0.0
 
+            # Rumus Akurat Scalping & Swing Berdasarkan Momentum & Volume Breakout
             intraday_drop = ((l - h) / h) * 100.0
             rebound_low = ((c - l) / l) * 100.0
-            is_rebound = (intraday_drop <= -2.5) and (rebound_low >= 2.0) and (v > vol_sma5 * 1.8) and (c >= vwap)
+            is_rebound = (intraday_drop <= -2.5) and (rebound_low >= 2.0) and (v > vol_sma5 * 1.5) and (c >= vwap)
 
             jenis_recom = "Konsolidasi Normal"
             alasan = "Pergerakan harga dan volume stabil dalam rentang konsolidasi wajar."
@@ -146,12 +154,12 @@ def download_market_data():
             elif c <= support * 1.015 and c >= support * 0.985:
                 jenis_recom = "Saham BOW"
                 alasan = "Buy on Weakness: Harga terkoreksi sehat menguji area Support Pivot kuat."
-            elif c > ma20 and ma20 > ma50:
+            elif c > ma20 and ma20 > ma50 and chg_pct > 0:
                 jenis_recom = "Saham Swing"
-                alasan = "Swing Trend Following: Struktur tren menengah bullish mapan (MA20 > MA50)."
-            elif chg_pct > 3.0 and v > (vol_sma5 * 1.6):
+                alasan = "Swing Trend Following Akurat: Struktur tren bullish mapan (MA20 > MA50) + Higher High."
+            elif chg_pct > 2.5 and v > (vol_sma5 * 1.5) and c >= h * 0.98:
                 jenis_recom = "Saham Scalping"
-                alasan = "Momentum Scalping: Lonjakan harga impulsif disertai volume masif."
+                alasan = "Momentum Scalping Akurat: Lonjakan harga impulsif menembus resistance intraday + volume masif."
             elif c > ma5 and 0.3 < chg_pct < 3.0 and c >= o:
                 jenis_recom = "Saham BSJP"
                 alasan = "Beli Sore Jual Pagi: Akumulasi institusi menjelang penutupan."
@@ -260,6 +268,104 @@ with m5:
             <div style="font-size: 0.8rem; color: #c084fc; margin-top: 2px;">Setup Siap</div>
         </div>
     """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ============================================================
+# PANEL INTERAKTIF: ANALISIS GRAFIK CANDLESTICK & STOCKBIT
+# ============================================================
+st.markdown("### 📊 Analisis Detail & Grafik Candlestick Emiten")
+col_sel1, col_sel2 = st.columns([2, 2])
+with col_sel1:
+    selected_ticker = st.selectbox("Pilih Kode Emiten untuk Melihat Candlestick & Indikator:", JII70_TICKERS, index=0)
+
+stockbit_url = f"https://stockbit.com/symbol/{selected_ticker}"
+with col_sel2:
+    st.markdown(f"""
+        <div style="padding-top: 28px;">
+            <a href="{stockbit_url}" target="_blank" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                🔗 Buka Analisis {selected_ticker} di Stockbit
+            </a>
+        </div>
+    """, unsafe_allow_html=True)
+
+# Download history data untuk charting candlestick & indikator teknikal
+@st.cache_data(ttl=300)
+def get_chart_data(ticker):
+    df_chart = yf.download(f"{ticker}.JK", period="3mo", interval="1d", progress=False, auto_adjust=False)
+    if isinstance(df_chart.columns, pd.MultiIndex):
+        df_chart.columns = df_chart.columns.get_level_values(0)
+    return df_chart
+
+chart_df = get_chart_data(selected_ticker)
+if not chart_df.empty and len(chart_df) > 20:
+    # Hitung MA 5, 10, 20
+    chart_df['MA5'] = chart_df['Close'].rolling(window=5).mean()
+    chart_df['MA10'] = chart_df['Close'].rolling(window=10).mean()
+    chart_df['MA20'] = chart_df['Close'].rolling(window=20).mean()
+
+    # Hitung RSI (14)
+    delta = chart_df['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    rs = gain / loss
+    chart_df['RSI'] = 100 - (100 / (1 + rs))
+
+    # Hitung MACD (12, 26, 9)
+    exp12 = chart_df['Close'].ewm(span=12, adjust=False).mean()
+    exp26 = chart_df['Close'].ewm(span=26, adjust=False).mean()
+    chart_df['MACD'] = exp12 - exp26
+    chart_df['Signal_Line'] = chart_df['MACD'].ewm(span=9, adjust=False).mean()
+    chart_df['MACD_Hist'] = chart_df['MACD'] - chart_df['Signal_Line']
+
+    # Hitung Stochastic Oscillator (14, 3)
+    low14 = chart_df['Low'].rolling(window=14).min()
+    high14 = chart_df['High'].rolling(window=14).max()
+    chart_df['%K'] = (chart_df['Close'] - low14) * 100 / (high14 - low14)
+    chart_df['%D'] = chart_df['%K'].rolling(window=3).mean()
+
+    # Buat Plotly Subplots (Candlestick, Volume, MACD, RSI, Stoch)
+    fig = make_subplots(rows=4, cols=1, shared_xaxes=True, 
+                        vertical_spacing=0.03, 
+                        row_heights=[0.45, 0.15, 0.2, 0.2],
+                        subplot_titles=(f"Candlestick & MA (5, 10, 20) - {selected_ticker}", "Volume", "MACD & Signal", "RSI (14) & Stochastic"))
+
+    # 1. Candlestick & MA
+    fig.add_trace(go.Candlestick(
+        x=chart_df.index, open=chart_df['Open'], high=chart_df['High'],
+        low=chart_df['Low'], close=chart_df['Close'], name='Candlestick'
+    ), row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA5'], line=dict(color='#fbbf24', width=1.5), name='MA 5'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA10'], line=dict(color='#38bdf8', width=1.5), name='MA 10'), row=1, col=1)
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA20'], line=dict(color='#c084fc', width=1.5), name='MA 20'), row=1, col=1)
+
+    # 2. Volume
+    colors = ['#22c55e' if c >= o else '#ef4444' for c, o in zip(chart_df['Close'], chart_df['Open'])]
+    fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['Volume'], marker_color=colors, name='Volume'), row=2, col=1)
+
+    # 3. MACD
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MACD'], line=dict(color='#38bdf8', width=1), name='MACD'), row=3, col=1)
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['Signal_Line'], line=dict(color='#f97316', width=1), name='Signal'), row=3, col=1)
+    fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['MACD_Hist'], marker_color='#64748b', name='Histogram'), row=3, col=1)
+
+    # 4. RSI & Stochastic
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['RSI'], line=dict(color='#a855f7', width=1.5), name='RSI (14)'), row=4, col=1)
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%K'], line=dict(color='#22c55e', width=1), name='%K Stoch'), row=4, col=1)
+    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%D'], line=dict(color='#ef4444', width=1), name='%D Stoch'), row=4, col=1)
+
+    # Layout Styling Dark Mode
+    fig.update_layout(
+        template='plotly_dark',
+        height=850,
+        margin=dict(l=10, r=10, t=30, b=10),
+        paper_bgcolor='rgba(15, 23, 42, 0.85)',
+        plot_bgcolor='rgba(15, 23, 42, 0.85)',
+        xaxis_rangeslider_visible=False,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
