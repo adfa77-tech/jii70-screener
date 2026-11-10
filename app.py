@@ -8,7 +8,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 # ============================================================
-# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V5)
+# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V5 - LIGHT MODE)
 # ============================================================
 st.set_page_config(
     page_title="JII70 Syariah Pro Terminal",
@@ -17,55 +17,59 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling CSS & Desain Terminal Keuangan dengan Background Pemandangan Alam & Kontras Teks
+# Custom Styling CSS & Desain Terang agar Background Pemandangan Terlihat Jelas & Estetik
 st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(rgba(3, 7, 18, 0.88), rgba(15, 23, 42, 0.92)), 
+        background: linear-gradient(rgba(241, 245, 249, 0.82), rgba(226, 232, 240, 0.88)), 
                     url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1920&auto=format&fit=crop');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
-        color: #f1f5f9;
+        color: #0f172a;
     }
     
-    /* Perbaikan kontras warna tulisan pada Radio Button / Pilihan Strategi */
+    /* Warna Teks & Label Utama */
+    h1, h2, h3, p, span, label {
+        color: #0f172a !important;
+    }
+    
     div.row-widget.stRadio > div {
-        color: #ffffff !important;
+        color: #0f172a !important;
         font-weight: 700 !important;
     }
     div.row-widget.stRadio label {
-        color: #ffffff !important;
+        color: #1e293b !important;
         font-size: 0.95rem !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
     }
     
-    /* Ukuran Kotak Kartu Metrik Lebih Kecil & Warna Berbeda-beda */
-    .metric-ihsg { background: linear-gradient(145deg, #1e1b4b 0%, #312e81 100%); border: 1px solid #4338ca; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    .metric-emiten { background: linear-gradient(145deg, #064e3b 0%, #065f46 100%); border: 1px solid #059669; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    .metric-naik { background: linear-gradient(145deg, #14532d 0%, #166534 100%); border: 1px solid #22c55e; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    .metric-turun { background: linear-gradient(145deg, #7f1d1d 0%, #991b1b 100%); border: 1px solid #ef4444; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-    .metric-rekom { background: linear-gradient(145deg, #3b0764 0%, #581c87 100%); border: 1px solid #a855f7; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    /* Ukuran Kotak Kartu Metrik Terang & Elegan */
+    .metric-ihsg { background: linear-gradient(145deg, #e0e7ff 0%, #c7d2fe 100%); border: 1px solid #818cf8; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .metric-emiten { background: linear-gradient(145deg, #d1fae5 0%, #a7f3d0 100%); border: 1px solid #34d399; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .metric-naik { background: linear-gradient(145deg, #dcfce7 0%, #bbf7d0 100%); border: 1px solid #4ade80; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .metric-turun { background: linear-gradient(145deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #f87171; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .metric-rekom { background: linear-gradient(145deg, #fae8ff 0%, #f5d0fe 100%); border: 1px solid #e879f9; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     
-    .metric-label { font-size: 0.75rem; color: #cbd5e1; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-    .metric-value { font-size: 1.25rem; font-weight: 800; color: #ffffff; }
+    .metric-label { font-size: 0.75rem; color: #475569; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .metric-value { font-size: 1.25rem; font-weight: 900; color: #0f172a; }
     
     /* Jam Realtime WIB Box */
     .clock-box {
-        background: rgba(30, 41, 59, 0.85);
-        border: 1px solid #38bdf8;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #0284c7;
         padding: 8px 16px;
         border-radius: 8px;
-        color: #38bdf8;
-        font-weight: 700;
+        color: #0369a1;
+        font-weight: 800;
         font-size: 0.9rem;
         display: inline-block;
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        box-shadow: 0 0 15px rgba(2, 132, 199, 0.2);
     }
     
-    /* Styling Header Tabel agar Bold dan Berwarna Profesional */
+    /* Styling Header Tabel agar Jelas & Profesional */
     thead tr th {
-        background-color: #1e293b !important;
+        background-color: #0f172a !important;
         color: #38bdf8 !important;
         font-weight: 900 !important;
         font-size: 0.95rem !important;
@@ -205,10 +209,10 @@ def download_market_data():
 col_h1, col_h2 = st.columns([3, 1])
 with col_h1:
     st.markdown("""
-        <h1 style="margin: 0; font-size: 2rem; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        <h1 style="margin: 0; font-size: 2rem; background: linear-gradient(90deg, #0284c7, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             ⚡ JII70 SYARIAH PRO TERMINAL
         </h1>
-        <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: #94a3b8; font-weight: 600; letter-spacing: 0.5px;">
+        <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: #1e293b; font-weight: 700; letter-spacing: 0.5px;">
             Made By : ADI CANDRA, S.HI, MM
         </p>
     """, unsafe_allow_html=True)
@@ -229,7 +233,7 @@ with st.spinner("Sinkronisasi real-time dengan server bursa..."):
 # ============================================================
 m1, m2, m3, m4, m5 = st.columns(5)
 
-chg_color = "#4ade80" if ihsg_info['chg'] >= 0 else "#f87171"
+chg_color = "#15803d" if ihsg_info['chg'] >= 0 else "#b91c1c"
 with m1:
     st.markdown(f"""
         <div class="metric-ihsg">
@@ -244,7 +248,7 @@ with m2:
         <div class="metric-emiten">
             <div class="metric-label">Total Emiten</div>
             <div class="metric-value">{len(df)}</div>
-            <div style="font-size: 0.8rem; color: #34d399; margin-top: 2px;">Aktif Terpantau</div>
+            <div style="font-size: 0.8rem; color: #047857; margin-top: 2px;">Aktif Terpantau</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -254,7 +258,7 @@ with m3:
         <div class="metric-naik">
             <div class="metric-label">Saham Naik</div>
             <div class="metric-value">{naik}</div>
-            <div style="font-size: 0.8rem; color: #4ade80; margin-top: 2px;">Bullish Sesi</div>
+            <div style="font-size: 0.8rem; color: #15803d; margin-top: 2px;">Bullish Sesi</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -264,7 +268,7 @@ with m4:
         <div class="metric-turun">
             <div class="metric-label">Saham Turun</div>
             <div class="metric-value">{turun}</div>
-            <div style="font-size: 0.8rem; color: #fca5a5; margin-top: 2px;">Bearish Sesi</div>
+            <div style="font-size: 0.8rem; color: #b91c1c; margin-top: 2px;">Bearish Sesi</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -274,7 +278,7 @@ with m5:
         <div class="metric-rekom">
             <div class="metric-label">Rekomendasi Aktif</div>
             <div class="metric-value">{layak}</div>
-            <div style="font-size: 0.8rem; color: #c084fc; margin-top: 2px;">Setup Siap</div>
+            <div style="font-size: 0.8rem; color: #7e22ce; margin-top: 2px;">Setup Siap</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -324,28 +328,28 @@ if not filtered_df.empty:
         s_val = str(val)
         if col_name == 'Chg%':
             if "+" in s_val:
-                return 'background-color: #064e3b; color: #4ade80; font-weight: bold;'
+                return 'background-color: #dcfce7; color: #15803d; font-weight: bold;'
             elif "-" in s_val:
-                return 'background-color: #7f1d1d; color: #f87171; font-weight: bold;'
+                return 'background-color: #fee2e2; color: #b91c1c; font-weight: bold;'
         elif col_name == 'Jenis Rekomendasi':
             if "Konsolidasi" in s_val:
-                return 'background-color: #0f172a; color: #64748b;'
-            return 'background-color: #1e1b4b; color: #38bdf8; font-weight: bold;'
+                return 'background-color: #f1f5f9; color: #64748b;'
+            return 'background-color: #e0e7ff; color: #3730a3; font-weight: bold;'
         
         col_colors = {
-            'Ticker': 'background-color: #0f172a; color: #f8fafc; font-weight: bold;',
-            'Open': 'background-color: #111827; color: #fbbf24;',
-            'Preview': 'background-color: #1f2937; color: #34d399;',
-            'High': 'background-color: #0c4a6e; color: #38bdf8;',
-            'Low': 'background-color: #4c1d95; color: #c084fc;',
-            'Close': 'background-color: #14532d; color: #4ade80; font-weight: bold;',
-            'Volume': 'background-color: #1e1b4b; color: #818cf8;',
-            'Frekuensi': 'background-color: #312e81; color: #a5b4fc;',
-            'Support': 'background-color: #701a75; color: #f472b6;',
-            'Resist': 'background-color: #831843; color: #fb7185;',
-            'Pivot': 'background-color: #78350f; color: #fcd34d;',
-            'Recom Beli': 'background-color: #14532d; color: #6ee7b7;',
-            'Recom Jual': 'background-color: #581c87; color: #d8b4fe;'
+            'Ticker': 'background-color: #f8fafc; color: #0f172a; font-weight: bold;',
+            'Open': 'background-color: #fef3c7; color: #b45309;',
+            'Preview': 'background-color: #f1f5f9; color: #334155;',
+            'High': 'background-color: #e0f2fe; color: #0369a1;',
+            'Low': 'background-color: #f3e8ff; color: #6b21a8;',
+            'Close': 'background-color: #dcfce7; color: #15803d; font-weight: bold;',
+            'Volume': 'background-color: #e0e7ff; color: #3730a3;',
+            'Frekuensi': 'background-color: #ede9fe; color: #5b21b6;',
+            'Support': 'background-color: #fce7f3; color: #9d174d;',
+            'Resist': 'background-color: #ffe4e6; color: #be123c;',
+            'Pivot': 'background-color: #fef9c3; color: #854d0e;',
+            'Recom Beli': 'background-color: #dcfce7; color: #166534;',
+            'Recom Jual': 'background-color: #fae8ff; color: #86198f;'
         }
         return col_colors.get(col_name, '')
 
@@ -357,7 +361,7 @@ if not filtered_df.empty:
     st.dataframe(styled_df, use_container_width=True, height=520)
 
     # ============================================================
-    # PANEL PILIHAN EMITEN & GRAFIK CANDLESTICK (MUNCUL KETIKA DIKLIK/DIPILIH)
+    # PANEL PILIHAN EMITEN & GRAFIK CANDLESTICK (MUNCUL KETIKA DIKLIK)
     # ============================================================
     st.markdown("---")
     st.markdown("### 📊 Analisis Detail, Grafik Candlestick & Stockbit")
@@ -366,13 +370,13 @@ if not filtered_df.empty:
     
     col_sel1, col_sel2 = st.columns([2, 2])
     with col_sel1:
-        selected_ticker = st.selectbox("Klik / Pilih Kode Emiten untuk Memunculkan Grafik:", available_tickers, index=0)
+        selected_ticker = st.selectbox("👇 Klik / Pilih Kode Emiten untuk Memunculkan Grafik Candlestick:", available_tickers, index=0)
 
     stockbit_url = f"https://stockbit.com/symbol/{selected_ticker}"
     with col_sel2:
         st.markdown(f"""
             <div style="padding-top: 28px;">
-                <a href="{stockbit_url}" target="_blank" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                <a href="{stockbit_url}" target="_blank" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                     🔗 Buka Analisis {selected_ticker} di Stockbit
                 </a>
             </div>
@@ -385,6 +389,7 @@ if not filtered_df.empty:
             df_chart.columns = df_chart.columns.get_level_values(0)
         return df_chart
 
+    # Grafik Candlestick & Indikator Lengkap Muncul Interaktif Saat Dipilih
     if selected_ticker:
         chart_df = get_chart_data(selected_ticker)
         if not chart_df.empty and len(chart_df) > 20:
@@ -419,27 +424,27 @@ if not filtered_df.empty:
                 low=chart_df['Low'], close=chart_df['Close'], name='Candlestick'
             ), row=1, col=1)
 
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA5'], line=dict(color='#fbbf24', width=1.5), name='MA 5'), row=1, col=1)
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA10'], line=dict(color='#38bdf8', width=1.5), name='MA 10'), row=1, col=1)
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA20'], line=dict(color='#c084fc', width=1.5), name='MA 20'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA5'], line=dict(color='#d97706', width=1.5), name='MA 5'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA10'], line=dict(color='#0284c7', width=1.5), name='MA 10'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA20'], line=dict(color='#9333ea', width=1.5), name='MA 20'), row=1, col=1)
 
-            colors = ['#22c55e' if c >= o else '#ef4444' for c, o in zip(chart_df['Close'], chart_df['Open'])]
+            colors = ['#16a34a' if c >= o else '#dc2626' for c, o in zip(chart_df['Close'], chart_df['Open'])]
             fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['Volume'], marker_color=colors, name='Volume'), row=2, col=1)
 
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MACD'], line=dict(color='#38bdf8', width=1), name='MACD'), row=3, col=1)
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['Signal_Line'], line=dict(color='#f97316', width=1), name='Signal'), row=3, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MACD'], line=dict(color='#0284c7', width=1), name='MACD'), row=3, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['Signal_Line'], line=dict(color='#ea580c', width=1), name='Signal'), row=3, col=1)
             fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['MACD_Hist'], marker_color='#64748b', name='Histogram'), row=3, col=1)
 
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['RSI'], line=dict(color='#a855f7', width=1.5), name='RSI (14)'), row=4, col=1)
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%K'], line=dict(color='#22c55e', width=1), name='%K Stoch'), row=4, col=1)
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%D'], line=dict(color='#ef4444', width=1), name='%D Stoch'), row=4, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['RSI'], line=dict(color='#9333ea', width=1.5), name='RSI (14)'), row=4, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%K'], line=dict(color='#16a34a', width=1), name='%K Stoch'), row=4, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%D'], line=dict(color='#dc2626', width=1), name='%D Stoch'), row=4, col=1)
 
             fig.update_layout(
-                template='plotly_dark',
+                template='plotly_white',
                 height=850,
                 margin=dict(l=10, r=10, t=30, b=10),
-                paper_bgcolor='rgba(15, 23, 42, 0.88)',
-                plot_bgcolor='rgba(15, 23, 42, 0.88)',
+                paper_bgcolor='rgba(255, 255, 255, 0.9)',
+                plot_bgcolor='rgba(255, 255, 255, 0.9)',
                 xaxis_rangeslider_visible=False,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
@@ -453,10 +458,4 @@ if not filtered_df.empty:
     with b1:
         csv_data = filtered_df.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="📥 Export to CSV",
-            data=csv_data,
-            file_name="jii70_pro_terminal_report.csv",
-            mime="text/csv"
-        )
-else:
-    st.warning("⚠️ Tidak ada data emiten yang cocok dengan filter atau kriteria pencarian.")
+            label="📥 Export to CSV
