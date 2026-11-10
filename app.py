@@ -8,7 +8,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 # ============================================================
-# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V5 - LIGHT MODE)
+# KONFIGURASI HALAMAN STREAMLIT (PRO TERMINAL V5)
 # ============================================================
 st.set_page_config(
     page_title="JII70 Syariah Pro Terminal",
@@ -17,11 +17,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling CSS & Desain Terang agar Background Pemandangan Terlihat Jelas & Estetik
+# Custom Styling CSS & Desain Background Pemandangan Super Jelas
 st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(rgba(241, 245, 249, 0.82), rgba(226, 232, 240, 0.88)), 
+        background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(240, 244, 248, 0.55)), 
                     url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1920&auto=format&fit=crop');
         background-size: cover;
         background-position: center;
@@ -32,6 +32,7 @@ st.markdown("""
     /* Warna Teks & Label Utama */
     h1, h2, h3, p, span, label {
         color: #0f172a !important;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
     }
     
     div.row-widget.stRadio > div {
@@ -39,24 +40,24 @@ st.markdown("""
         font-weight: 700 !important;
     }
     div.row-widget.stRadio label {
-        color: #1e293b !important;
+        color: #0f172a !important;
         font-size: 0.95rem !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
     }
     
-    /* Ukuran Kotak Kartu Metrik Terang & Elegan */
-    .metric-ihsg { background: linear-gradient(145deg, #e0e7ff 0%, #c7d2fe 100%); border: 1px solid #818cf8; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .metric-emiten { background: linear-gradient(145deg, #d1fae5 0%, #a7f3d0 100%); border: 1px solid #34d399; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .metric-naik { background: linear-gradient(145deg, #dcfce7 0%, #bbf7d0 100%); border: 1px solid #4ade80; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .metric-turun { background: linear-gradient(145deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #f87171; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .metric-rekom { background: linear-gradient(145deg, #fae8ff 0%, #f5d0fe 100%); border: 1px solid #e879f9; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    /* Ukuran Kotak Kartu Metrik Semi-Transparan Elegan */
+    .metric-ihsg { background: rgba(224, 231, 255, 0.85); border: 1px solid #818cf8; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
+    .metric-emiten { background: rgba(209, 250, 229, 0.85); border: 1px solid #34d399; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
+    .metric-naik { background: rgba(220, 252, 231, 0.85); border: 1px solid #4ade80; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
+    .metric-turun { background: rgba(254, 226, 226, 0.85); border: 1px solid #f87171; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
+    .metric-rekom { background: rgba(250, 232, 255, 0.85); border: 1px solid #e879f9; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
     
-    .metric-label { font-size: 0.75rem; color: #475569; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .metric-label { font-size: 0.75rem; color: #334155; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
     .metric-value { font-size: 1.25rem; font-weight: 900; color: #0f172a; }
     
     /* Jam Realtime WIB Box */
     .clock-box {
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         border: 1px solid #0284c7;
         padding: 8px 16px;
         border-radius: 8px;
@@ -212,7 +213,7 @@ with col_h1:
         <h1 style="margin: 0; font-size: 2rem; background: linear-gradient(90deg, #0284c7, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
             ⚡ JII70 SYARIAH PRO TERMINAL
         </h1>
-        <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: #1e293b; font-weight: 700; letter-spacing: 0.5px;">
+        <p style="margin: 4px 0 0 0; font-size: 0.9rem; color: #0f172a; font-weight: 800; letter-spacing: 0.5px;">
             Made By : ADI CANDRA, S.HI, MM
         </p>
     """, unsafe_allow_html=True)
@@ -328,28 +329,28 @@ if not filtered_df.empty:
         s_val = str(val)
         if col_name == 'Chg%':
             if "+" in s_val:
-                return 'background-color: #dcfce7; color: #15803d; font-weight: bold;'
+                return 'background-color: rgba(220, 252, 231, 0.9); color: #15803d; font-weight: bold;'
             elif "-" in s_val:
-                return 'background-color: #fee2e2; color: #b91c1c; font-weight: bold;'
+                return 'background-color: rgba(254, 226, 226, 0.9); color: #b91c1c; font-weight: bold;'
         elif col_name == 'Jenis Rekomendasi':
             if "Konsolidasi" in s_val:
-                return 'background-color: #f1f5f9; color: #64748b;'
-            return 'background-color: #e0e7ff; color: #3730a3; font-weight: bold;'
+                return 'background-color: rgba(241, 245, 249, 0.9); color: #64748b;'
+            return 'background-color: rgba(224, 231, 255, 0.9); color: #3730a3; font-weight: bold;'
         
         col_colors = {
-            'Ticker': 'background-color: #f8fafc; color: #0f172a; font-weight: bold;',
-            'Open': 'background-color: #fef3c7; color: #b45309;',
-            'Preview': 'background-color: #f1f5f9; color: #334155;',
-            'High': 'background-color: #e0f2fe; color: #0369a1;',
-            'Low': 'background-color: #f3e8ff; color: #6b21a8;',
-            'Close': 'background-color: #dcfce7; color: #15803d; font-weight: bold;',
-            'Volume': 'background-color: #e0e7ff; color: #3730a3;',
-            'Frekuensi': 'background-color: #ede9fe; color: #5b21b6;',
-            'Support': 'background-color: #fce7f3; color: #9d174d;',
-            'Resist': 'background-color: #ffe4e6; color: #be123c;',
-            'Pivot': 'background-color: #fef9c3; color: #854d0e;',
-            'Recom Beli': 'background-color: #dcfce7; color: #166534;',
-            'Recom Jual': 'background-color: #fae8ff; color: #86198f;'
+            'Ticker': 'background-color: rgba(248, 250, 252, 0.9); color: #0f172a; font-weight: bold;',
+            'Open': 'background-color: rgba(254, 243, 199, 0.9); color: #b45309;',
+            'Preview': 'background-color: rgba(241, 245, 249, 0.9); color: #334155;',
+            'High': 'background-color: rgba(224, 242, 254, 0.9); color: #0369a1;',
+            'Low': 'background-color: rgba(243, 232, 255, 0.9); color: #6b21a8;',
+            'Close': 'background-color: rgba(220, 252, 231, 0.9); color: #15803d; font-weight: bold;',
+            'Volume': 'background-color: rgba(224, 231, 255, 0.9); color: #3730a3;',
+            'Frekuensi': 'background-color: rgba(237, 233, 254, 0.9); color: #5b21b6;',
+            'Support': 'background-color: rgba(252, 231, 243, 0.9); color: #9d174d;',
+            'Resist': 'background-color: rgba(255, 228, 230, 0.9); color: #be123c;',
+            'Pivot': 'background-color: rgba(254, 249, 195, 0.9); color: #854d0e;',
+            'Recom Beli': 'background-color: rgba(220, 252, 231, 0.9); color: #166534;',
+            'Recom Jual': 'background-color: rgba(250, 232, 255, 0.9); color: #86198f;'
         }
         return col_colors.get(col_name, '')
 
@@ -443,8 +444,8 @@ if not filtered_df.empty:
                 template='plotly_white',
                 height=850,
                 margin=dict(l=10, r=10, t=30, b=10),
-                paper_bgcolor='rgba(255, 255, 255, 0.9)',
-                plot_bgcolor='rgba(255, 255, 255, 0.9)',
+                paper_bgcolor='rgba(255, 255, 255, 0.85)',
+                plot_bgcolor='rgba(255, 255, 255, 0.85)',
                 xaxis_rangeslider_visible=False,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
             )
@@ -458,4 +459,10 @@ if not filtered_df.empty:
     with b1:
         csv_data = filtered_df.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label="📥 Export to CSV
+            label="📥 Export to CSV",
+            data=csv_data,
+            file_name="jii70_pro_terminal_report.csv",
+            mime="text/csv"
+        )
+else:
+    st.warning("⚠️ Tidak ada data emiten yang cocok dengan filter atau kriteria pencarian.")
