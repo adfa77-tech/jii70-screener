@@ -17,16 +17,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling CSS & Desain Terminal Keuangan dengan Background Pemandangan Alam
+# Custom Styling CSS & Desain Terminal Keuangan dengan Background Pemandangan Alam & Kontras Teks
 st.markdown("""
     <style>
     .stApp {
-        background: linear-gradient(rgba(3, 7, 18, 0.85), rgba(15, 23, 42, 0.90)), 
+        background: linear-gradient(rgba(3, 7, 18, 0.88), rgba(15, 23, 42, 0.92)), 
                     url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1920&auto=format&fit=crop');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
         color: #f1f5f9;
+    }
+    
+    /* Perbaikan kontras warna tulisan pada Radio Button / Pilihan Strategi */
+    div.row-widget.stRadio > div {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+    }
+    div.row-widget.stRadio label {
+        color: #ffffff !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
     }
     
     /* Ukuran Kotak Kartu Metrik Lebih Kecil & Warna Berbeda-beda */
@@ -134,13 +145,11 @@ def download_market_data():
             vwap = ((pivot * v) / v) if v > 0 else pivot
 
             ma5 = float(c_s.rolling(window=5).mean().iloc[-1])
-            ma10 = float(c_s.rolling(window=10).mean().iloc[-1])
             ma20 = float(c_s.rolling(window=20).mean().iloc[-1])
             ma50 = float(c_s.rolling(window=50).mean().iloc[-1]) if len(c_s) >= 50 else ma20
             
             vol_sma5 = float(v_s.rolling(window=5).mean().iloc[-1]) if len(v_s) >= 5 else 0.0
 
-            # Rumus Akurat Scalping & Swing Berdasarkan Momentum & Volume Breakout
             intraday_drop = ((l - h) / h) * 100.0
             rebound_low = ((c - l) / l) * 100.0
             is_rebound = (intraday_drop <= -2.5) and (rebound_low >= 2.0) and (v > vol_sma5 * 1.5) and (c >= vwap)
@@ -272,104 +281,6 @@ with m5:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ============================================================
-# PANEL INTERAKTIF: ANALISIS GRAFIK CANDLESTICK & STOCKBIT
-# ============================================================
-st.markdown("### 📊 Analisis Detail & Grafik Candlestick Emiten")
-col_sel1, col_sel2 = st.columns([2, 2])
-with col_sel1:
-    selected_ticker = st.selectbox("Pilih Kode Emiten untuk Melihat Candlestick & Indikator:", JII70_TICKERS, index=0)
-
-stockbit_url = f"https://stockbit.com/symbol/{selected_ticker}"
-with col_sel2:
-    st.markdown(f"""
-        <div style="padding-top: 28px;">
-            <a href="{stockbit_url}" target="_blank" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                🔗 Buka Analisis {selected_ticker} di Stockbit
-            </a>
-        </div>
-    """, unsafe_allow_html=True)
-
-# Download history data untuk charting candlestick & indikator teknikal
-@st.cache_data(ttl=300)
-def get_chart_data(ticker):
-    df_chart = yf.download(f"{ticker}.JK", period="3mo", interval="1d", progress=False, auto_adjust=False)
-    if isinstance(df_chart.columns, pd.MultiIndex):
-        df_chart.columns = df_chart.columns.get_level_values(0)
-    return df_chart
-
-chart_df = get_chart_data(selected_ticker)
-if not chart_df.empty and len(chart_df) > 20:
-    # Hitung MA 5, 10, 20
-    chart_df['MA5'] = chart_df['Close'].rolling(window=5).mean()
-    chart_df['MA10'] = chart_df['Close'].rolling(window=10).mean()
-    chart_df['MA20'] = chart_df['Close'].rolling(window=20).mean()
-
-    # Hitung RSI (14)
-    delta = chart_df['Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    rs = gain / loss
-    chart_df['RSI'] = 100 - (100 / (1 + rs))
-
-    # Hitung MACD (12, 26, 9)
-    exp12 = chart_df['Close'].ewm(span=12, adjust=False).mean()
-    exp26 = chart_df['Close'].ewm(span=26, adjust=False).mean()
-    chart_df['MACD'] = exp12 - exp26
-    chart_df['Signal_Line'] = chart_df['MACD'].ewm(span=9, adjust=False).mean()
-    chart_df['MACD_Hist'] = chart_df['MACD'] - chart_df['Signal_Line']
-
-    # Hitung Stochastic Oscillator (14, 3)
-    low14 = chart_df['Low'].rolling(window=14).min()
-    high14 = chart_df['High'].rolling(window=14).max()
-    chart_df['%K'] = (chart_df['Close'] - low14) * 100 / (high14 - low14)
-    chart_df['%D'] = chart_df['%K'].rolling(window=3).mean()
-
-    # Buat Plotly Subplots (Candlestick, Volume, MACD, RSI, Stoch)
-    fig = make_subplots(rows=4, cols=1, shared_xaxes=True, 
-                        vertical_spacing=0.03, 
-                        row_heights=[0.45, 0.15, 0.2, 0.2],
-                        subplot_titles=(f"Candlestick & MA (5, 10, 20) - {selected_ticker}", "Volume", "MACD & Signal", "RSI (14) & Stochastic"))
-
-    # 1. Candlestick & MA
-    fig.add_trace(go.Candlestick(
-        x=chart_df.index, open=chart_df['Open'], high=chart_df['High'],
-        low=chart_df['Low'], close=chart_df['Close'], name='Candlestick'
-    ), row=1, col=1)
-
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA5'], line=dict(color='#fbbf24', width=1.5), name='MA 5'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA10'], line=dict(color='#38bdf8', width=1.5), name='MA 10'), row=1, col=1)
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA20'], line=dict(color='#c084fc', width=1.5), name='MA 20'), row=1, col=1)
-
-    # 2. Volume
-    colors = ['#22c55e' if c >= o else '#ef4444' for c, o in zip(chart_df['Close'], chart_df['Open'])]
-    fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['Volume'], marker_color=colors, name='Volume'), row=2, col=1)
-
-    # 3. MACD
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MACD'], line=dict(color='#38bdf8', width=1), name='MACD'), row=3, col=1)
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['Signal_Line'], line=dict(color='#f97316', width=1), name='Signal'), row=3, col=1)
-    fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['MACD_Hist'], marker_color='#64748b', name='Histogram'), row=3, col=1)
-
-    # 4. RSI & Stochastic
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['RSI'], line=dict(color='#a855f7', width=1.5), name='RSI (14)'), row=4, col=1)
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%K'], line=dict(color='#22c55e', width=1), name='%K Stoch'), row=4, col=1)
-    fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%D'], line=dict(color='#ef4444', width=1), name='%D Stoch'), row=4, col=1)
-
-    # Layout Styling Dark Mode
-    fig.update_layout(
-        template='plotly_dark',
-        height=850,
-        margin=dict(l=10, r=10, t=30, b=10),
-        paper_bgcolor='rgba(15, 23, 42, 0.85)',
-        plot_bgcolor='rgba(15, 23, 42, 0.85)',
-        xaxis_rangeslider_visible=False,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ============================================================
 # PANEL KONTROL & NAVIGASI STRATEGI (TABS MODERN)
 # ============================================================
 st.markdown("### 🔍 Terminal Filter & Analisis Strategi")
@@ -409,12 +320,8 @@ if not filtered_df.empty:
     if search_query:
         filtered_df = filtered_df[filtered_df['Ticker'].str.contains(search_query, na=False)]
 
-    # ============================================================
-    # PEWARNAAN LEMBUT & BERBEDA DI SETIAP KOLOM TABEL
-    # ============================================================
     def color_by_column(val, col_name):
         s_val = str(val)
-        
         if col_name == 'Chg%':
             if "+" in s_val:
                 return 'background-color: #064e3b; color: #4ade80; font-weight: bold;'
@@ -448,6 +355,96 @@ if not filtered_df.empty:
     
     # Tampilkan Tabel Data Interaktif
     st.dataframe(styled_df, use_container_width=True, height=520)
+
+    # ============================================================
+    # PANEL PILIHAN EMITEN & GRAFIK CANDLESTICK (MUNCUL KETIKA DIKLIK/DIPILIH)
+    # ============================================================
+    st.markdown("---")
+    st.markdown("### 📊 Analisis Detail, Grafik Candlestick & Stockbit")
+    
+    available_tickers = filtered_df['Ticker'].tolist() if not filtered_df.empty else JII70_TICKERS
+    
+    col_sel1, col_sel2 = st.columns([2, 2])
+    with col_sel1:
+        selected_ticker = st.selectbox("Klik / Pilih Kode Emiten untuk Memunculkan Grafik:", available_tickers, index=0)
+
+    stockbit_url = f"https://stockbit.com/symbol/{selected_ticker}"
+    with col_sel2:
+        st.markdown(f"""
+            <div style="padding-top: 28px;">
+                <a href="{stockbit_url}" target="_blank" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                    🔗 Buka Analisis {selected_ticker} di Stockbit
+                </a>
+            </div>
+        """, unsafe_allow_html=True)
+
+    @st.cache_data(ttl=300)
+    def get_chart_data(ticker):
+        df_chart = yf.download(f"{ticker}.JK", period="3mo", interval="1d", progress=False, auto_adjust=False)
+        if isinstance(df_chart.columns, pd.MultiIndex):
+            df_chart.columns = df_chart.columns.get_level_values(0)
+        return df_chart
+
+    if selected_ticker:
+        chart_df = get_chart_data(selected_ticker)
+        if not chart_df.empty and len(chart_df) > 20:
+            chart_df['MA5'] = chart_df['Close'].rolling(window=5).mean()
+            chart_df['MA10'] = chart_df['Close'].rolling(window=10).mean()
+            chart_df['MA20'] = chart_df['Close'].rolling(window=20).mean()
+
+            delta = chart_df['Close'].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            chart_df['RSI'] = 100 - (100 / (1 + rs))
+
+            exp12 = chart_df['Close'].ewm(span=12, adjust=False).mean()
+            exp26 = chart_df['Close'].ewm(span=26, adjust=False).mean()
+            chart_df['MACD'] = exp12 - exp26
+            chart_df['Signal_Line'] = chart_df['MACD'].ewm(span=9, adjust=False).mean()
+            chart_df['MACD_Hist'] = chart_df['MACD'] - chart_df['Signal_Line']
+
+            low14 = chart_df['Low'].rolling(window=14).min()
+            high14 = chart_df['High'].rolling(window=14).max()
+            chart_df['%K'] = (chart_df['Close'] - low14) * 100 / (high14 - low14)
+            chart_df['%D'] = chart_df['%K'].rolling(window=3).mean()
+
+            fig = make_subplots(rows=4, cols=1, shared_xaxes=True, 
+                                vertical_spacing=0.03, 
+                                row_heights=[0.45, 0.15, 0.2, 0.2],
+                                subplot_titles=(f"Candlestick & MA (5, 10, 20) - {selected_ticker}", "Volume", "MACD & Signal", "RSI (14) & Stochastic"))
+
+            fig.add_trace(go.Candlestick(
+                x=chart_df.index, open=chart_df['Open'], high=chart_df['High'],
+                low=chart_df['Low'], close=chart_df['Close'], name='Candlestick'
+            ), row=1, col=1)
+
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA5'], line=dict(color='#fbbf24', width=1.5), name='MA 5'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA10'], line=dict(color='#38bdf8', width=1.5), name='MA 10'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA20'], line=dict(color='#c084fc', width=1.5), name='MA 20'), row=1, col=1)
+
+            colors = ['#22c55e' if c >= o else '#ef4444' for c, o in zip(chart_df['Close'], chart_df['Open'])]
+            fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['Volume'], marker_color=colors, name='Volume'), row=2, col=1)
+
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MACD'], line=dict(color='#38bdf8', width=1), name='MACD'), row=3, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['Signal_Line'], line=dict(color='#f97316', width=1), name='Signal'), row=3, col=1)
+            fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['MACD_Hist'], marker_color='#64748b', name='Histogram'), row=3, col=1)
+
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['RSI'], line=dict(color='#a855f7', width=1.5), name='RSI (14)'), row=4, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%K'], line=dict(color='#22c55e', width=1), name='%K Stoch'), row=4, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%D'], line=dict(color='#ef4444', width=1), name='%D Stoch'), row=4, col=1)
+
+            fig.update_layout(
+                template='plotly_dark',
+                height=850,
+                margin=dict(l=10, r=10, t=30, b=10),
+                paper_bgcolor='rgba(15, 23, 42, 0.88)',
+                plot_bgcolor='rgba(15, 23, 42, 0.88)',
+                xaxis_rangeslider_visible=False,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
 
     # ============================================================
     # TOMBOL DOWNLOAD
