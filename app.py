@@ -175,9 +175,6 @@ def download_market_data():
             # ==========================================================
             # PENERAPAN STRATEGI SCALPING BARU
             # ==========================================================
-            # Filter Likuiditas: Value transaksi >= 5 Miliar / Volume Relatif >= 1.5x
-            # Filter Volatilitas & Momentum: Harga Rp 100 - Rp 2.000, Chg% +2% s.d +8%, Rentang Intraday >= 3%
-            # Filter Teknikal: Harga di atas VWAP, EMA 9 > EMA 20, RSI di rentang 50 - 70
             intraday_range_pct = ((h - l) / l) * 100.0
             is_scalping_new = (
                 (100 <= c <= 2000) and
@@ -195,7 +192,7 @@ def download_market_data():
                 alasan = "Setup Scalping Sempurna: Value >5M, Range >=3%, %Chg +2%-+8%, VWAP & EMA 9>20 Bullish, RSI Momentum (50-70)."
                 waktu_jual = "Intraday (30-60 Min / Cepat)"
                 recom_beli = c
-                recom_jual = c * 1.02  # Target profit ketat 1-2%
+                recom_jual = c * 1.02
             elif is_rebound:
                 jenis_recom = "Saham Rebound"
                 alasan = "Shakeout Rebound: Tekanan jual diredam buyer besar dengan lonjakan volume."
@@ -216,37 +213,4 @@ def download_market_data():
                 recom_jual = resist * 1.02
             elif c > ma5 and 0.3 < chg_pct < 3.0 and c >= o:
                 jenis_recom = "Saham BSJP"
-                alasan = "Beli Sore Jual Pagi: Akumulasi institusi menjelang penutupan."
-                waktu_jual = "Besok Pagi (09:00 - 09:30 WIB)"
-                recom_beli = c
-                recom_jual = c * 1.02
-            elif 0.0 < chg_pct <= 1.2:
-                jenis_recom = "Saham BPJS"
-                alasan = "Beli Pagi Jual Siang: Stabilitas harga di sesi pertama aman."
-                waktu_jual = "Siang Hari Ini (11:30 WIB)"
-                recom_beli = o
-                recom_jual = o * 1.015
-
-            results.append({
-                'Ticker': t, 
-                'Open': f"{o:,.0f}".replace(",", "."), 
-                'Preview': f"{p:,.0f}".replace(",", "."), 
-                'High': f"{h:,.0f}".replace(",", "."),
-                'Low': f"{l:,.0f}".replace(",", "."), 
-                'Close': f"{c:,.0f}".replace(",", "."), 
-                'Chg%': f"{chg_pct:+.2f}%",  
-                'Volume': f"{v:,.0f}".replace(",", "."),
-                'Frekuensi': f"{freq:,.0f}".replace(",", "."), 
-                'Support': f"{support:,.0f}".replace(",", "."), 
-                'Resist': f"{resist:,.0f}".replace(",", "."),
-                'Pivot': f"{pivot:,.0f}".replace(",", "."), 
-                'Harga Beli': f"{recom_beli:,.0f}".replace(",", "."), 
-                'Harga Jual': f"{recom_jual:,.0f}".replace(",", "."),
-                'Waktu Jual': waktu_jual,
-                'Jenis Rekomendasi': jenis_recom, 
-                'Alasan': alasan
-            })
-        except Exception:
-            continue
-
-    return pd.DataFrame(results), {'current': ihsg_current, '
+                alasan = "Beli Sore Jual Pagi: Akumulasi institusi menjelang pen
