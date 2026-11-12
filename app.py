@@ -142,6 +142,7 @@ def download_market_data():
 
             chg_pct = ((c - p) / p) * 100.0
             freq = int(v / 1500) if v > 0 else 100
+            val_transaksi = c * v
             
             pivot = (h + l + c) / 3.0
             support = (2.0 * pivot) - h
@@ -149,9 +150,17 @@ def download_market_data():
             vwap = ((pivot * v) / v) if v > 0 else pivot
 
             ma5 = float(c_s.rolling(window=5).mean().iloc[-1])
-            ma20 = float(c_s.rolling(window=20).mean().iloc[-1])
-            ma50 = float(c_s.rolling(window=50).mean().iloc[-1]) if len(c_s) >= 50 else ma20
+            ema9 = float(c_s.ewm(span=9, adjust=False).mean().iloc[-1])
+            ema20 = float(c_s.ewm(span=20, adjust=False).mean().iloc[-1])
+            ma50 = float(c_s.rolling(window=50).mean().iloc[-1]) if len(c_s) >= 50 else ema20
             vol_sma5 = float(v_s.rolling(window=5).mean().iloc[-1]) if len(v_s) >= 5 else 0.0
+
+            # RSI 14 Calculation
+            delta = c_s.diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            rsi_val = float((100 - (100 / (1 + rs))).iloc[-1])
 
             intraday_drop = ((l - h) / h) * 100.0
             rebound_low = ((c - l) / l) * 100.0
@@ -163,7 +172,26 @@ def download_market_data():
             recom_beli = c
             recom_jual = resist
 
-            if is_rebound:
+            # Evaluasi Berdasarkan Aturan Scalping Baru & Setup Lainnya
+            # Aturan Scalping Baru: +2% s.d +8% chg, rentang harian >=3%, harga 100-2000, >VWAP, EMA9>EMA20, RSI 50-70, Volatilitas/Volume tinggi
+            intraday_range_pct = ((h - l) / l) * 100.0
+            is_scalping_new = (
+                (100 <= c <= 2000) and
+                (2.0 <= chg_pct <= 8.0) and
+                (intraday_range_pct >= 3.0) and
+                (c >= vwap) and
+                (ema9 > ema20) and
+                (50 <= rsi_val <= 70) and
+                (v >= vol_sma5 * 1.5)
+            )
+
+            if is_scalping_new:
+                jenis_recom = "Saham Scalping"
+                alasan = "Setup Scalping Sempurna: Vol Rasio >1.5x, %Chg +2%-+8%, Harga di atas VWAP & EMA9>EMA20, RSI Momentum (50-70)."
+                waktu_jual = "Intraday (30-60 Min / Cepat)"
+                recom_beli = c
+                recom_jual = c * 1.025
+            elif is_rebound:
                 jenis_recom = "Saham Rebound"
                 alasan = "Shakeout Rebound: Tekanan jual diredam buyer besar dengan lonjakan volume."
                 waktu_jual = "Intraday / 1-3 Hari ke Depan"
@@ -175,18 +203,12 @@ def download_market_data():
                 waktu_jual = "Swing 3-7 Hari"
                 recom_beli = support
                 recom_jual = pivot
-            elif c > ma20 and ma20 > ma50 and chg_pct > 0:
+            elif c > ema20 and ema20 > ma50 and chg_pct > 0:
                 jenis_recom = "Saham Swing"
-                alasan = "Swing Trend Following: Struktur tren bullish mapan (MA20 > MA50)."
+                alasan = "Swing Trend Following: Struktur tren bullish mapan (EMA20 > MA50)."
                 waktu_jual = "1-2 Minggu (Trailing Stop)"
-                recom_beli = ma20
+                recom_beli = ema20
                 recom_jual = resist * 1.02
-            elif chg_pct > 2.5 and v > (vol_sma5 * 1.5) and c >= h * 0.98:
-                jenis_recom = "Saham Scalping"
-                alasan = "Momentum Scalping: Lonjakan harga impulsif menembus resistance + volume masif."
-                waktu_jual = "Hari Ini (Sesi 1 / Sesi 2)"
-                recom_beli = o
-                recom_jual = h * 1.015
             elif c > ma5 and 0.3 < chg_pct < 3.0 and c >= o:
                 jenis_recom = "Saham BSJP"
                 alasan = "Beli Sore Jual Pagi: Akumulasi institusi menjelang penutupan."
@@ -306,7 +328,7 @@ with m5:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ============================================================
-# PANEL KONTROL & NAVIGASI STRATEGI (TABS MODERN)
+# PANEL KONTROL & NAVIGASI STRATEGI (DIPINDAH KE HALAMAN DEPAN)
 # ============================================================
 st.markdown("### 🔍 Terminal Filter & Analisis Strategi")
 
@@ -416,9 +438,9 @@ if not filtered_df.empty:
     if selected_ticker:
         chart_df = get_chart_data(selected_ticker)
         if not chart_df.empty and len(chart_df) > 20:
-            chart_df['MA5'] = chart_df['Close'].rolling(window=5).mean()
-            chart_df['MA10'] = chart_df['Close'].rolling(window=10).mean()
-            chart_df['MA20'] = chart_df['Close'].rolling(window=20).mean()
+            chart_df['EMA9'] = chart_df['Close'].ewm(span=9, adjust=False).mean()
+            chart_df['EMA20'] = chart_df['Close'].ewm(span=20, adjust=False).mean()
+            chart_df['MA50'] = chart_df['Close'].rolling(window=50).mean()
 
             delta = chart_df['Close'].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
@@ -440,16 +462,16 @@ if not filtered_df.empty:
             fig = make_subplots(rows=4, cols=1, shared_xaxes=True, 
                                 vertical_spacing=0.03, 
                                 row_heights=[0.45, 0.15, 0.2, 0.2],
-                                subplot_titles=(f"Candlestick & MA (5, 10, 20) - {selected_ticker}", "Volume", "MACD & Signal", "RSI (14) & Stochastic"))
+                                subplot_titles=(f"Candlestick & EMA (9, 20) - {selected_ticker}", "Volume", "MACD & Signal", "RSI (14) & Stochastic"))
 
             fig.add_trace(go.Candlestick(
                 x=chart_df.index, open=chart_df['Open'], high=chart_df['High'],
                 low=chart_df['Low'], close=chart_df['Close'], name='Candlestick'
             ), row=1, col=1)
 
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA5'], line=dict(color='#fbbf24', width=1.5), name='MA 5'), row=1, col=1)
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA10'], line=dict(color='#38bdf8', width=1.5), name='MA 10'), row=1, col=1)
-            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA20'], line=dict(color='#c084fc', width=1.5), name='MA 20'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['EMA9'], line=dict(color='#fbbf24', width=1.5), name='EMA 9'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['EMA20'], line=dict(color='#38bdf8', width=1.5), name='EMA 20'), row=1, col=1)
+            fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['MA50'], line=dict(color='#c084fc', width=1.5), name='MA 50'), row=1, col=1)
 
             colors = ['#22c55e' if c >= o else '#ef4444' for c, o in zip(chart_df['Close'], chart_df['Open'])]
             fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['Volume'], marker_color=colors, name='Volume'), row=2, col=1)
@@ -459,6 +481,10 @@ if not filtered_df.empty:
             fig.add_trace(go.Bar(x=chart_df.index, y=chart_df['MACD_Hist'], marker_color='#64748b', name='Histogram'), row=3, col=1)
 
             fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['RSI'], line=dict(color='#a855f7', width=1.5), name='RSI (14)'), row=4, col=1)
+            fig.add_hline(y=70, line_dash="dash", line_color="#ef4444", row=4, col=1)
+            fig.add_hline(y=50, line_dash="dot", line_color="#38bdf8", row=4, col=1)
+            fig.add_hline(y=30, line_dash="dash", line_color="#22c55e", row=4, col=1)
+            
             fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%K'], line=dict(color='#22c55e', width=1), name='%K Stoch'), row=4, col=1)
             fig.add_trace(go.Scatter(x=chart_df.index, y=chart_df['%D'], line=dict(color='#ef4444', width=1), name='%D Stoch'), row=4, col=1)
 
@@ -516,7 +542,7 @@ if not filtered_df.empty:
         res_c1, res_c2, res_c3, res_c4 = st.columns(4)
         
         with res_c1:
-            st.metric("Total Modal Bersihi", f"Rp {total_modal_bersih:,.0f}".replace(",", "."))
+            st.metric("Total Modal Bersih", f"Rp {total_modal_bersih:,.0f}".replace(",", "."))
         with res_c2:
             st.metric("Total Nilai Jual", f"Rp {total_jual_bersih:,.0f}".replace(",", "."))
         with res_c3:
