@@ -115,7 +115,7 @@ def download_market_data():
             if isinstance(hist.columns, pd.MultiIndex):
                 hist.columns = hist.columns.get_level_values(0)
             
-            if hist is None or hist.empty or len(hist) < 20:
+            if hist is None or hist.empty or len(hist) < 30:
                 continue
 
             def get_s(col):
@@ -127,7 +127,7 @@ def download_market_data():
                 return pd.to_numeric(d, errors="coerce").dropna()
 
             o_s, h_s, l_s, c_s, v_s = get_s("Open"), get_s("High"), get_s("Low"), get_s("Close"), get_s("Volume")
-            if len(c_s) < 20:
+            if len(c_s) < 30:
                 continue
 
             o = float(o_s.iloc[-1]) if len(o_s) > 0 else float(c_s.iloc[-1])
@@ -152,15 +152,20 @@ def download_market_data():
             ma5 = float(c_s.rolling(window=5).mean().iloc[-1])
             ema9 = float(c_s.ewm(span=9, adjust=False).mean().iloc[-1])
             ema20 = float(c_s.ewm(span=20, adjust=False).mean().iloc[-1])
-            ma50 = float(c_s.rolling(window=50).mean().iloc[-1]) if len(c_s) >= 50 else ema20
+            ma50 = float(c_s.rolling(window=50).mean().iloc[-1]) if len(c_s) >= 50 else float(c_s.mean())
             vol_sma5 = float(v_s.rolling(window=5).mean().iloc[-1]) if len(v_s) >= 5 else 0.0
 
-            # RSI 14 Calculation
+            # RSI 14 & MACD Calculation
             delta = c_s.diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
             rsi_val = float((100 - (100 / (1 + rs))).iloc[-1])
+
+            exp12 = c_s.ewm(span=12, adjust=False).mean()
+            exp26 = c_s.ewm(span=26, adjust=False).mean()
+            macd_series = exp12 - exp26
+            macd_val = float(macd_series.iloc[-1])
 
             intraday_drop = ((l - h) / h) * 100.0
             rebound_low = ((c - l) / l) * 100.0
@@ -187,12 +192,34 @@ def download_market_data():
                 (v >= vol_sma5 * 1.5)
             )
 
+            # ==========================================================
+            # PENERAPAN STRATEGI SWING BARU (REQUEST USER)
+            # ==========================================================
+            # - Posisi Uptrend di atas MA 50 (c > ma50)
+            # - Jenuh Jual saat Saham Sedang Merah (chg_pct < 0)
+            # - MACD Positif (macd_val > 0)
+            # - Berpotensi Naik karena Volume Meningkat (v > vol_sma5 * 1.2)
+            # - Minimal Transaksi 2 Milyar (val_transaksi >= 2_000_000_000)
+            is_swing_new = (
+                (c > ma50) and
+                (chg_pct < 0) and
+                (macd_val > 0) and
+                (v > vol_sma5 * 1.2) and
+                (val_transaksi >= 2_000_000_000)
+            )
+
             if is_scalping_new:
                 jenis_recom = "Saham Scalping"
                 alasan = "Setup Scalping Sempurna: Value >5M, Range >=3%, %Chg +2%-+8%, VWAP & EMA 9>20 Bullish, RSI Momentum (50-70)."
                 waktu_jual = "Intraday (30-60 Min / Cepat)"
                 recom_beli = c
                 recom_jual = c * 1.02
+            elif is_swing_new:
+                jenis_recom = "Saham Swing"
+                alasan = "Swing Buy on Weakness (Uptrend MA50 + MACD Positif + Saham Merah Jenuh Jual + Lonjakan Volume & Transaksi >2Milyar)."
+                waktu_jual = "3-7 Hari / Target Resistance"
+                recom_beli = support
+                recom_jual = resist
             elif is_rebound:
                 jenis_recom = "Saham Rebound"
                 alasan = "Shakeout Rebound: Tekanan jual diredam buyer besar dengan lonjakan volume."
@@ -205,12 +232,6 @@ def download_market_data():
                 waktu_jual = "Swing 3-7 Hari"
                 recom_beli = support
                 recom_jual = pivot
-            elif c > ema20 and ema20 > ma50 and chg_pct > 0:
-                jenis_recom = "Saham Swing"
-                alasan = "Swing Trend Following: Struktur tren bullish mapan (EMA 20 > MA 50)."
-                waktu_jual = "1-2 Minggu (Trailing Stop)"
-                recom_beli = ema20
-                recom_jual = resist * 1.02
             elif c > ma5 and 0.3 < chg_pct < 3.0 and c >= o:
                 jenis_recom = "Saham BSJP"
                 alasan = "Beli Sore Jual Pagi: Akumulasi institusi menjelang penutupan."
